@@ -18,7 +18,7 @@ from database import DatabaseManager
 from transaction_manager import TransactionManager
 from code_manager import CodeManager
 from classification_manager import ClassificationManager
-from template_loader import StringTemplateLoader, BASE_TEMPLATE, INDEX_TEMPLATE, PRINT_TEMPLATE
+from templates.modals_template import StringTemplateLoader, BASE_TEMPLATE, INDEX_TEMPLATE, PRINT_TEMPLATE
 from templates.add_transaction_modal import ADD_TRANSACTION_MODAL, ADD_TRANSACTION_SCRIPT
 from templates.edit_transaction_modal import EDIT_TRANSACTION_MODAL, EDIT_TRANSACTION_SCRIPT
 from templates.print_modals import PRINT_MODALS_HTML, PRINT_MODALS_SCRIPT

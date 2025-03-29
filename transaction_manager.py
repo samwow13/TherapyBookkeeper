@@ -15,7 +15,7 @@ from datetime import datetime
 from collections import defaultdict
 from flask import request, redirect, url_for, flash, g
 from database import DatabaseManager
-from template_loader import INDEX_TEMPLATE, PRINT_TEMPLATE
+from templates.modals_template import INDEX_TEMPLATE, PRINT_TEMPLATE
 
 class TransactionManager:
     """
