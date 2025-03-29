@@ -24,6 +24,12 @@ ADD_TRANSACTION_MODAL = """
                         <input type="text" class="form-control" id="description" name="description" required>
                     </div>
                     <div class="mb-3">
+                        <label for="code" class="form-label">Code</label>
+                        <select class="form-select" id="code" name="code" required>
+                            {{ code_options|safe }}
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
@@ -41,12 +47,6 @@ ADD_TRANSACTION_MODAL = """
                         <label for="classification" class="form-label">Classification</label>
                         <select class="form-select" id="classification" name="classification" required>
                             {{ classification_options|safe }}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="code" class="form-label">Code</label>
-                        <select class="form-select" id="code" name="code" required>
-                            {{ code_options|safe }}
                         </select>
                     </div>
                 </div>
@@ -72,6 +72,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const lastDate = localStorage.getItem('lastTransactionDate');
                 dateField.value = lastDate || new Date().toISOString().split('T')[0];
             }
+            
+            // Auto-fill amount field based on default selected code when modal opens
+            const codeSelect = document.getElementById('code');
+            const amountField = document.getElementById('amount');
+            
+            if (codeSelect && amountField && codeSelect.value) {
+                // Extract the numeric part of the code
+                const numericCode = codeSelect.value.replace(/\D/g, '');
+                if (numericCode) {
+                    amountField.value = numericCode;
+                }
+            }
         });
     }
     
@@ -82,6 +94,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const dateValue = document.getElementById('date').value;
             if (dateValue) {
                 localStorage.setItem('lastTransactionDate', dateValue);
+            }
+        });
+    }
+    
+    // Auto-fill amount field when code is selected
+    const codeSelect = document.getElementById('code');
+    if (codeSelect) {
+        codeSelect.addEventListener('change', function() {
+            const selectedCode = codeSelect.value;
+            const amountField = document.getElementById('amount');
+            
+            if (selectedCode && amountField) {
+                // Extract the numeric part of the code
+                const numericCode = selectedCode.replace(/\D/g, '');
+                if (numericCode) {
+                    amountField.value = numericCode;
+                }
             }
         });
     }
