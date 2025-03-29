@@ -19,6 +19,7 @@ from transaction_manager import TransactionManager
 from code_manager import CodeManager
 from classification_manager import ClassificationManager
 from template_loader import StringTemplateLoader, BASE_TEMPLATE, INDEX_TEMPLATE, PRINT_TEMPLATE
+from templates.add_transaction_modal import ADD_TRANSACTION_MODAL, ADD_TRANSACTION_SCRIPT
 from config import DATABASE, CLASSIFICATIONS, CODES
 
 # --- Flask App Setup ---
@@ -56,7 +57,9 @@ def inject_date_context():
     return {
         'now': datetime.now(),  # Keep the original now variable
         'today_date': today,    # Today's date formatted as YYYY-MM-DD
-        'suggested_date': suggested_date  # Either recent transaction date or today
+        'suggested_date': suggested_date,  # Either recent transaction date or today
+        'add_transaction_modal': ADD_TRANSACTION_MODAL,  # Add the transaction modal HTML
+        'add_transaction_script': ADD_TRANSACTION_SCRIPT  # Add the transaction modal script
     }
 
 # --- Routes ---
