@@ -65,7 +65,8 @@ def inject_modal_data():
         ADD_TRANSACTION_SCRIPT_TEMPLATE, 
         EDIT_TRANSACTION_SCRIPT_TEMPLATE,
         DELETE_TRANSACTION_SCRIPT_TEMPLATE,
-        PRINT_MODALS_SCRIPT_TEMPLATE
+        PRINT_MODALS_SCRIPT_TEMPLATE,
+        EDIT_CODES_SCRIPT_TEMPLATE
     )
     
     # Default empty options
@@ -97,6 +98,7 @@ def inject_modal_data():
         'edit_transaction_script': EDIT_TRANSACTION_SCRIPT_TEMPLATE,
         'delete_transaction_script': DELETE_TRANSACTION_SCRIPT_TEMPLATE,
         'print_modals_script': PRINT_MODALS_SCRIPT_TEMPLATE,
+        'edit_codes_script': EDIT_CODES_SCRIPT_TEMPLATE,
         'classification_options': classification_options,
         'code_options': code_options,
     }

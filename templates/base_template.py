@@ -86,6 +86,9 @@ BASE_TEMPLATE = """
     <script>
         {{ print_modals_script|safe }}
     </script>
+    <script>
+        {{ edit_codes_script|safe }}
+    </script>
 
     <!-- Global Script -->
     <script>

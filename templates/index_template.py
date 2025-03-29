@@ -49,7 +49,7 @@ INDEX_TEMPLATE = """
                 <i class="bi bi-plus-circle me-1"></i> Add Transaction
             </button>
             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editCodesModal">
-                <i class="bi bi-gear me-1"></i> Edit Codes
+                <i class="bi bi-gear me-1"></i> Edit Codes and Classifications
             </button>
         </div>
     </div>

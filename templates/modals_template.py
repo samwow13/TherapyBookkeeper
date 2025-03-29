@@ -14,16 +14,18 @@ from templates.add_transaction_modal import ADD_TRANSACTION_MODAL, ADD_TRANSACTI
 from templates.edit_transaction_modal import EDIT_TRANSACTION_MODAL, EDIT_TRANSACTION_SCRIPT
 from templates.delete_transaction_modal import DELETE_TRANSACTION_MODAL, DELETE_TRANSACTION_SCRIPT
 from templates.print_modals import PRINT_MODALS_HTML, PRINT_MODALS_SCRIPT
+from templates.edit_codes_modal import EDIT_CODES_MODAL, EDIT_CODES_SCRIPT
 
 # Combine all modal HTML content - use string concatenation instead of f-string
 # to avoid issues with Jinja2 templates
-MODALS_TEMPLATE = ADD_TRANSACTION_MODAL + "\n" + EDIT_TRANSACTION_MODAL + "\n" + DELETE_TRANSACTION_MODAL + "\n" + PRINT_MODALS_HTML
+MODALS_TEMPLATE = ADD_TRANSACTION_MODAL + "\n" + EDIT_TRANSACTION_MODAL + "\n" + DELETE_TRANSACTION_MODAL + "\n" + PRINT_MODALS_HTML + "\n" + EDIT_CODES_MODAL
 
 # Collect all modal scripts to be included in the base template
 ADD_TRANSACTION_SCRIPT_TEMPLATE = ADD_TRANSACTION_SCRIPT
 EDIT_TRANSACTION_SCRIPT_TEMPLATE = EDIT_TRANSACTION_SCRIPT
 DELETE_TRANSACTION_SCRIPT_TEMPLATE = DELETE_TRANSACTION_SCRIPT
 PRINT_MODALS_SCRIPT_TEMPLATE = PRINT_MODALS_SCRIPT
+EDIT_CODES_SCRIPT_TEMPLATE = EDIT_CODES_SCRIPT
 
 class StringTemplateLoader(BaseLoader):
     """
@@ -38,6 +40,7 @@ class StringTemplateLoader(BaseLoader):
             'print.html': PRINT_TEMPLATE,
             'modals.html': MODALS_TEMPLATE,
             'add_transaction_modal.html': ADD_TRANSACTION_MODAL,
+            'edit_codes_modal.html': EDIT_CODES_MODAL,
         }
 
     def get_source(self, environment, template):
