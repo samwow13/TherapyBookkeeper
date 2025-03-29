@@ -26,6 +26,17 @@ BASE_TEMPLATE = """
         .modal-body .form-label { margin-bottom: 0.3rem; }
         .flash-message { margin-top: 15px; }
 
+        /* Fix for modal z-index issues */
+        .modal {
+            z-index: 1050 !important;
+        }
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+        .modal-dialog {
+            z-index: 1060 !important;
+        }
+
         /* Navigation bar styling */
         .navbar {
             background-color: #ffdac1 !important; /* Light peachy color matching monthlySummaryHeader */
@@ -93,34 +104,6 @@ BASE_TEMPLATE = """
             100% { transform: translateY(-100%); }
         }
 
-        /* MODAL CSS FIXES */
-        .modal {
-            z-index: 1060 !important; /* Modal container */
-            overflow-y: auto; /* Ensure modal itself can scroll if content is long */
-        }
-        .modal-dialog {
-             z-index: 1070 !important; /* Dialog needs to be above modal container */
-             pointer-events: auto !important; /* Crucial: Ensure clicks go to dialog */
-        }
-        .modal-content {
-            pointer-events: auto !important; /* Ensure clicks go to content */
-        }
-
-        /* Modal transition fixes */
-        .modal.fade .modal-dialog {
-            transition: transform 0.3s ease-out;
-            transform: translate(0, -50px);
-        }
-        .modal.show .modal-dialog {
-            transform: none;
-        }
-        body.modal-open {
-             overflow: hidden; /* Prevent body scrolling */
-             /* Remove Bootstrap's default padding-right adjustment if it causes issues */
-             padding-right: 0 !important;
-        }
-        /* END MODAL CSS FIXES */
-
         /* Custom styling for the application */
         .account-summary-card {
             transition: all 0.3s;
@@ -153,34 +136,6 @@ BASE_TEMPLATE = """
         .btn-add-transaction:hover, .btn-edit-codes:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .modal-content {
-            pointer-events: auto !important;
-        }
-        
-        .modal-backdrop {
-            opacity: 0.5 !important; 
-            z-index: 1040 !important;
-        }
-        
-        .modal {
-            z-index: 1050 !important;
-        }
-        
-        /* Ensure form elements are interactive */
-        .modal-body .form-control,
-        .modal-body .form-select,
-        .modal-footer .btn {
-            position: relative;
-            z-index: 1051 !important;
-            pointer-events: auto !important;
-        }
-        
-        /* Fix for modal backdrop issue */
-        body.modal-open {
-            overflow: auto !important;
-            padding-right: 0 !important;
         }
     </style>
 </head>
@@ -226,6 +181,9 @@ BASE_TEMPLATE = """
         {% block content %}{% endblock %}
     </div>
 
+    <!-- Modal Templates -->
+    {{ modals_content|safe }}
+
     <!-- Footer -->
     <footer class="footer mt-auto py-3 bg-light">
         <div class="container">
@@ -237,124 +195,86 @@ BASE_TEMPLATE = """
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Modal Templates -->
-    {{ modals_content|safe }}
-
-    <!-- Custom styles to fix modal issues -->
-    <style>
-        /* Ensure modals are displayed on top of other elements */
-        .modal {
-            z-index: 1050 !important;
-        }
-        
-        /* Fix modal backdrop */
-        .modal-backdrop {
-            z-index: 1040 !important;
-        }
-        
-        /* Ensure input fields are clickable */
-        .modal-content input,
-        .modal-content select,
-        .modal-content button {
-            z-index: 1060 !important;
-            position: relative;
-        }
-    </style>
-    
-    <!-- Modal-specific JavaScript -->
+    <!-- Modal Scripts -->
     <script>
-        // Ensure the modal works correctly
+        {{ add_transaction_script|safe }}
+    </script>
+    <script>
+        {{ edit_transaction_script|safe }}
+    </script>
+    <script>
+        {{ delete_transaction_script|safe }}
+    </script>
+
+    <!-- Global Script -->
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Remove any existing backdrops
-            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-            
-            // Reset body classes that might be stuck
-            document.body.classList.remove('modal-open');
-            document.body.style.removeProperty('overflow');
-            document.body.style.removeProperty('padding-right');
-            
-            // Direct fix: Override Bootstrap's modal backdrop click handling
-            const fixModal = function() {
+            // Fix for any modal issues
+            const fixModals = function() {
                 // Remove any stale backdrops
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+                    backdrop.remove();
+                });
                 
-                // Get buttons that open the add transaction modal
-                const buttons = document.querySelectorAll('[data-bs-target="#addTransactionModal"]');
+                // Reset body classes
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
                 
-                buttons.forEach(button => {
+                // Make sure all modals have proper event handling
+                document.querySelectorAll('.modal').forEach(function(modalEl) {
+                    // Ensure modal is properly initialized with Bootstrap
+                    if (!bootstrap.Modal.getInstance(modalEl)) {
+                        new bootstrap.Modal(modalEl);
+                    }
+                    
+                    modalEl.addEventListener('hidden.bs.modal', function() {
+                        // Clean up after modal is closed
+                        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+                            backdrop.remove();
+                        });
+                        document.body.classList.remove('modal-open');
+                        document.body.style.removeProperty('overflow');
+                        document.body.style.removeProperty('padding-right');
+                    });
+                });
+                
+                // Fix any buttons that trigger modals
+                document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function(button) {
                     button.addEventListener('click', function(e) {
-                        // Prevent the default Bootstrap modal behavior
-                        e.preventDefault();
-                        e.stopPropagation();
+                        e.preventDefault(); // Prevent default action
                         
-                        // Get the modal element
-                        const modalEl = document.querySelector('#addTransactionModal');
+                        // Get the target modal ID
+                        const targetModalId = this.getAttribute('data-bs-target');
+                        if (!targetModalId) return;
                         
-                        // Manually show the modal
-                        if (modalEl) {
-                            // Create a fresh backdrop
-                            const backdropEl = document.createElement('div');
-                            backdropEl.className = 'modal-backdrop fade show';
-                            backdropEl.style.zIndex = '1040';
-                            document.body.appendChild(backdropEl);
-                            
-                            // Show the modal
-                            modalEl.style.display = 'block';
-                            modalEl.classList.add('show');
-                            modalEl.setAttribute('aria-modal', 'true');
-                            modalEl.removeAttribute('aria-hidden');
-                            
-                            // Make sure the modal is on top and interactive
-                            modalEl.style.zIndex = '1050';
-                            
-                            // Ensure inputs are clickable
-                            modalEl.querySelectorAll('input, select, button').forEach(el => {
-                                el.style.zIndex = '1060';
-                                el.style.position = 'relative';
-                                el.style.pointerEvents = 'auto';
-                            });
-                            
-                            // Add listener for close button
-                            modalEl.querySelectorAll('[data-bs-dismiss="modal"]').forEach(closeBtn => {
-                                closeBtn.addEventListener('click', function() {
-                                    modalEl.style.display = 'none';
-                                    modalEl.classList.remove('show');
-                                    modalEl.setAttribute('aria-hidden', 'true');
-                                    modalEl.removeAttribute('aria-modal');
-                                    
-                                    // Remove the backdrop
-                                    document.querySelectorAll('.modal-backdrop').forEach(bd => bd.remove());
-                                });
-                            });
-                            
-                            // Set form values
-                            const dateField = modalEl.querySelector('#date');
-                            if (dateField) {
-                                const lastDate = localStorage.getItem('lastTransactionDate');
-                                if (lastDate) {
-                                    dateField.value = lastDate;
-                                } else {
-                                    const today = new Date().toISOString().split('T')[0];
-                                    dateField.value = today;
-                                }
-                            }
-                        }
+                        // Find the modal element
+                        const modalEl = document.querySelector(targetModalId);
+                        if (!modalEl) return;
+                        
+                        // Remove any existing backdrop
+                        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+                            backdrop.remove();
+                        });
+                        
+                        // Ensure modal is properly initialized with Bootstrap
+                        const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        
+                        // Show the modal
+                        modalInstance.show();
                     });
                 });
             };
             
-            // Run the fix immediately and also after a short delay (for dynamic content)
-            fixModal();
-            setTimeout(fixModal, 500);
-        });
-        
-        {{ add_transaction_script|safe }}
-        {{ edit_transaction_script|safe }}
-        {{ delete_transaction_script|safe }}
-        
-        // Additional global scripts
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Therapy Bookkeeping App initialized');
+            // Run the fix immediately and after a short delay (for dynamic content)
+            fixModals();
+            setTimeout(fixModals, 500);
+            
+            // Initialize tooltips and popovers if any
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
     </script>
     

@@ -25,6 +25,7 @@ class StringTemplateLoader(BaseLoader):
             'index.html': INDEX_TEMPLATE,
             'print.html': PRINT_TEMPLATE,
             'modals.html': MODALS_TEMPLATE,
+            'add_transaction_modal.html': ADD_TRANSACTION_MODAL,
         }
 
     def get_source(self, environment, template):

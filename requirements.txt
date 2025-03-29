@@ -1,5 +1,4 @@
 Flask==2.3.3
 Jinja2==3.1.2
 Werkzeug==2.3.7
-SQLite3==0.0.1
 python-dateutil==2.8.2
