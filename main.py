@@ -1,28 +1,20 @@
-# -*- coding: utf-8 -*-
 """
 Therapy Bookkeeping Application
 A Flask-based bookkeeping application for a solo therapist.
 Features: Homepage listing transactions, modal for adding transactions,
           monthly and overall financial summaries.
 """
-
-import sqlite3
 import os
-from flask import Flask, render_template_string, request, redirect, url_for, g, flash, jsonify
+from flask import Flask, request, redirect, url_for, g, flash, jsonify
 from datetime import datetime
-from collections import defaultdict
-from jinja2 import BaseLoader, Environment, TemplateNotFound
 
 # Import modules
 from database import DatabaseManager
 from transaction_manager import TransactionManager
 from code_manager import CodeManager
 from classification_manager import ClassificationManager
-from templates.modals_template import StringTemplateLoader, BASE_TEMPLATE, INDEX_TEMPLATE, PRINT_TEMPLATE
-from templates.add_transaction_modal import ADD_TRANSACTION_MODAL, ADD_TRANSACTION_SCRIPT
-from templates.edit_transaction_modal import EDIT_TRANSACTION_MODAL, EDIT_TRANSACTION_SCRIPT
-from templates.print_modals import PRINT_MODALS_HTML, PRINT_MODALS_SCRIPT
-from config import DATABASE, CLASSIFICATIONS, CODES
+from templates.modals_template import StringTemplateLoader
+from config import DATABASE
 
 # --- Flask App Setup ---
 app = Flask(__name__, static_folder='static')
