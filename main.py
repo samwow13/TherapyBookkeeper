@@ -170,10 +170,76 @@ def delete_code(code):
     """Handles deleting a transaction code."""
     return code_manager.delete_code(code)
 
+@app.route('/api/delete_code/<code>', methods=['DELETE'])
+def api_delete_code(code):
+    """API endpoint for deleting a transaction code."""
+    db = db_manager.get_db()
+    cursor = db.cursor()
+    
+    # Check if code is in use
+    cursor.execute("SELECT COUNT(*) FROM transactions WHERE code = ?", (code,))
+    if cursor.fetchone()[0] > 0:
+        return jsonify({
+            'success': False,
+            'message': f'Cannot delete code "{code}" because it is in use by transactions.'
+        })
+    
+    try:
+        cursor.execute("DELETE FROM codes WHERE code = ?", (code,))
+        db.commit()
+        if cursor.rowcount > 0:
+            return jsonify({
+                'success': True,
+                'message': f'Code "{code}" deleted successfully!'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Code "{code}" not found.'
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting code: {str(e)}'
+        })
+
 @app.route('/delete_classification/<classification>', methods=['POST'])
 def delete_classification(classification):
     """Handles deleting a transaction classification."""
     return classification_manager.delete_classification(classification)
+
+@app.route('/api/delete_classification/<classification>', methods=['DELETE'])
+def api_delete_classification(classification):
+    """API endpoint for deleting a transaction classification."""
+    db = db_manager.get_db()
+    cursor = db.cursor()
+    
+    # Check if classification is in use
+    cursor.execute("SELECT COUNT(*) FROM transactions WHERE classification = ?", (classification,))
+    if cursor.fetchone()[0] > 0:
+        return jsonify({
+            'success': False,
+            'message': f'Cannot delete classification "{classification}" because it is in use by transactions.'
+        })
+    
+    try:
+        cursor.execute("DELETE FROM classifications WHERE classification = ?", (classification,))
+        db.commit()
+        if cursor.rowcount > 0:
+            return jsonify({
+                'success': True,
+                'message': f'Classification "{classification}" deleted successfully!'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Classification "{classification}" not found.'
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting classification: {str(e)}'
+        })
 
 # AJAX Endpoints
 @app.route('/api/check_code_usage/<code>')
