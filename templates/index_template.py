@@ -257,7 +257,11 @@ INDEX_TEMPLATE = """
                                                 <td>{{ transaction.code }}</td>
                                                 <td>{{ transaction.classification }}</td>
                                                 <td class="text-end {% if transaction.type == 'credit' %}credit{% else %}debit{% endif %}">
-                                                    {{ '{:,.2f}'.format(transaction.amount) }}
+                                                    {% if transaction.type == 'credit' %}
+                                                        {{ '{:,.2f}'.format(transaction.amount) }}
+                                                    {% else %}
+                                                        -{{ '{:,.2f}'.format(transaction.amount) }}
+                                                    {% endif %}
                                                 </td>
                                                 <td class="text-center">
                                                     <div class="btn-group" role="group">
@@ -323,7 +327,11 @@ INDEX_TEMPLATE = """
                                 <td>{{ transaction.code }}</td>
                                 <td>{{ transaction.classification }}</td>
                                 <td class="text-end {% if transaction.type == 'credit' %}credit{% else %}debit{% endif %}">
-                                    {{ '{:,.2f}'.format(transaction.amount) }}
+                                    {% if transaction.type == 'credit' %}
+                                        {{ '{:,.2f}'.format(transaction.amount) }}
+                                    {% else %}
+                                        -{{ '{:,.2f}'.format(transaction.amount) }}
+                                    {% endif %}
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
@@ -506,7 +514,11 @@ INDEX_TEMPLATE = """
                     <td>{{ transaction.code }}</td>
                     <td>{{ transaction.classification }}</td>
                     <td class="text-end {% if transaction.type == 'credit' %}credit{% else %}debit{% endif %}">
-                        {{ '{:,.2f}'.format(transaction.amount) }}
+                        {% if transaction.type == 'credit' %}
+                            {{ '{:,.2f}'.format(transaction.amount) }}
+                        {% else %}
+                            -{{ '{:,.2f}'.format(transaction.amount) }}
+                        {% endif %}
                     </td>
                     <td class="text-center">
                         <div class="btn-group" role="group">

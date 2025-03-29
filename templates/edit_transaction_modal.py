@@ -24,6 +24,12 @@ EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
                         <input type="text" class="form-control" id="edit_description" name="description" >
                     </div>
                     <div class="mb-3">
+                        <label for="edit_code" class="form-label">Code</label>
+                        <select class="form-select" id="edit_code" name="code" required>
+                            {{ code_options|safe }}
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="edit_amount" class="form-label">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">$</span>
@@ -41,12 +47,6 @@ EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
                         <label for="edit_classification" class="form-label">Classification</label>
                         <select class="form-select" id="edit_classification" name="classification" required>
                             {{ classification_options|safe }}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_code" class="form-label">Code</label>
-                        <select class="form-select" id="edit_code" name="code" required>
-                            {{ code_options|safe }}
                         </select>
                     </div>
                 </div>
@@ -71,6 +71,17 @@ document.addEventListener('DOMContentLoaded', function() {
             loadTransactionData(transactionId);
         });
     }
+    
+    // Add event listener for code dropdown to autofill amount if code is a number
+    const codeSelect = document.getElementById('edit_code');
+    codeSelect.addEventListener('change', function() {
+        const selectedCode = this.value;
+        // Check if the code is a number
+        if (!isNaN(selectedCode) && selectedCode.trim() !== '') {
+            // Autofill the amount field with the code value
+            document.getElementById('edit_amount').value = selectedCode;
+        }
+    });
     
     // Function to fetch and load transaction data
     async function loadTransactionData(id) {
