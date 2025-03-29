@@ -21,7 +21,7 @@ EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
                     </div>
                     <div class="mb-3">
                         <label for="edit_description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="edit_description" name="description" required>
+                        <input type="text" class="form-control" id="edit_description" name="description" >
                     </div>
                     <div class="mb-3">
                         <label for="edit_amount" class="form-label">Amount</label>
@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to fetch and load transaction data
     async function loadTransactionData(id) {
         try {
-            const response = await fetch(`{{ url_for('get_transaction', transaction_id=0) }}`.replace('0', id));
+            // Use the direct API endpoint instead of template variables
+            const response = await fetch(`/api/transaction/${id}`);
             if (!response.ok) {
                 throw new Error('Failed to fetch transaction data');
             }
