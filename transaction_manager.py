@@ -190,6 +190,27 @@ class TransactionManager:
         cursor.execute("SELECT * FROM transactions ORDER BY date DESC LIMIT ?", (limit,))
         return cursor.fetchall()
     
+    def get_most_recent_transaction_date(self):
+        """
+        Get the date of the most recent transaction.
+        
+        Returns:
+            The date of the most recent transaction as a string (YYYY-MM-DD),
+            or None if no transactions exist
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT date FROM transactions ORDER BY date DESC LIMIT 1")
+        result = cursor.fetchone()
+        
+        # Debug output
+        if result:
+            print(f"DEBUG - Found most recent transaction with date: {result[0]}")
+        else:
+            print("DEBUG - No transactions found in database")
+            
+        return result[0] if result else None
+    
     def get_transactions_by_month(self, month):
         """
         Get transactions for a specific month.

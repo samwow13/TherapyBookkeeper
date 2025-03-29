@@ -34,10 +34,30 @@ classification_manager = ClassificationManager(db_manager)
 # Replace default loader and ensure environment uses it
 app.jinja_loader = StringTemplateLoader()
 
-# Add a global variable for 'now' to pre-fill date in modal
+# Add global variables for date in modal - either most recent transaction date or today
 @app.context_processor
-def inject_now():
-    return {'now': datetime.now()}  # Use local time for default date
+def inject_date_context():
+    today = datetime.now().strftime('%Y-%m-%d')  # Today's date formatted as YYYY-MM-DD
+    
+    # Get the most recent transaction date if available
+    recent_date = None
+    try:
+        recent_date = transaction_manager.get_most_recent_transaction_date()
+        print(f"DEBUG - Most recent transaction date: {recent_date}")
+    except Exception as e:
+        # If any error occurs, default to today's date
+        app.logger.error(f"Error getting recent transaction date: {e}")
+        print(f"DEBUG - Error getting recent date: {e}")
+    
+    # Use recent_date if available, otherwise use today
+    suggested_date = recent_date if recent_date else today
+    print(f"DEBUG - Using date for form: {suggested_date}")
+    
+    return {
+        'now': datetime.now(),  # Keep the original now variable
+        'today_date': today,    # Today's date formatted as YYYY-MM-DD
+        'suggested_date': suggested_date  # Either recent transaction date or today
+    }
 
 # --- Routes ---
 @app.route('/')

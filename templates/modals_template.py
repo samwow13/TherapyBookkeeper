@@ -16,7 +16,7 @@ MODALS_TEMPLATE = """{% block modals %}
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="date" name="date" required value="{{ today_date }}">
+                        <input type="date" class="form-control" id="date" name="date" required value="{{ suggested_date }}">
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
@@ -172,34 +172,31 @@ MODALS_TEMPLATE = """{% block modals %}
                                 </form>
                             </div>
                         </div>
-                        {% if codes %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Code</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="codes-list">
-                                    {% for code in codes %}
-                                    <tr>
-                                        <td>{{ code }}</td>
-                                        <td>
-                                            <form action="{{ url_for('delete_code', code=code) }}" method="post" class="d-inline delete-code-form" data-code="{{ code }}">
-                                                <button type="button" class="btn btn-sm btn-outline-danger check-code-usage">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% else %}
-                        <p class="text-muted">No codes defined yet.</p>
-                        {% endif %}
-                        <div class="alert alert-info mt-3">
-                            <i class="bi bi-info-circle me-2"></i> Codes that are in use by existing transactions cannot be deleted.
+                        
+                        <div id="codes-container">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Transaction Codes</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary codes-prev-page" disabled>
+                                        <i class="bi bi-arrow-left"></i>
+                                    </button>
+                                    <span class="mx-2 codes-page-info">Page 1</span>
+                                    <button class="btn btn-sm btn-outline-secondary codes-next-page">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <ul class="list-group codes-list">
+                                {% for code in codes %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ code }}
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-code" data-code="{{ code }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
                         </div>
                     </div>
                     
@@ -213,34 +210,31 @@ MODALS_TEMPLATE = """{% block modals %}
                                 </form>
                             </div>
                         </div>
-                        {% if classifications %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Classification</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="classifications-list">
-                                    {% for classification in classifications %}
-                                    <tr>
-                                        <td>{{ classification }}</td>
-                                        <td>
-                                            <form action="{{ url_for('delete_classification', classification=classification) }}" method="post" class="d-inline delete-classification-form" data-classification="{{ classification }}">
-                                                <button type="button" class="btn btn-sm btn-outline-danger check-classification-usage">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% else %}
-                        <p class="text-muted">No classifications defined yet.</p>
-                        {% endif %}
-                        <div class="alert alert-info mt-3">
-                            <i class="bi bi-info-circle me-2"></i> Classifications that are in use by existing transactions cannot be deleted.
+                        
+                        <div id="classifications-container">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Transaction Classifications</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary classifications-prev-page" disabled>
+                                        <i class="bi bi-arrow-left"></i>
+                                    </button>
+                                    <span class="mx-2 classifications-page-info">Page 1</span>
+                                    <button class="btn btn-sm btn-outline-secondary classifications-next-page">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <ul class="list-group classifications-list">
+                                {% for classification in classifications %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ classification }}
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-classification" data-classification="{{ classification }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </li>
+                                {% endfor %}
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -257,33 +251,72 @@ MODALS_TEMPLATE = """{% block modals %}
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="printYearModalLabel">Print Transactions by Year</h5>
+                <h5 class="modal-title" id="printYearModalLabel">Print Year Report</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="printYearInput" class="form-label">Enter Year</label>
-                    <input type="number" class="form-control" id="printYearInput" min="2000" max="2100" value="{{ now.year }}" required>
-                    <div class="form-text">Enter the year you want to print transactions for.</div>
+            <form action="{{ url_for('print_year_transactions', year=0) }}" method="get" id="printYearForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="print_year" class="form-label">Select Year</label>
+                        <select class="form-select" id="print_year" name="year" required>
+                            {% for year in available_years %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="submitPrintYear">Print</button>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-{% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Store last used date in localStorage when a transaction is added
+    const addTransactionForm = document.querySelector('#addTransactionModal form');
+    if (addTransactionForm) {
+        addTransactionForm.addEventListener('submit', function() {
+            // Get the date value from the form
+            const dateValue = document.getElementById('date').value;
+            if (dateValue) {
+                // Store it in localStorage
+                localStorage.setItem('lastTransactionDate', dateValue);
+                console.log('Saved date to localStorage:', dateValue);
+            }
+        });
+    }
+    
+    // Set date field when the add transaction modal is opened
+    const addTransactionModal = document.getElementById('addTransactionModal');
+    if (addTransactionModal) {
+        addTransactionModal.addEventListener('show.bs.modal', function() {
+            // Get the stored date from localStorage
+            const lastDate = localStorage.getItem('lastTransactionDate');
+            const dateField = document.getElementById('date');
+            
+            if (lastDate && dateField) {
+                // Set the date field to the stored date
+                dateField.value = lastDate;
+                console.log('Restored date from localStorage:', lastDate);
+            } else if (dateField) {
+                // If no stored date, use today
+                const today = new Date().toISOString().split('T')[0];
+                dateField.value = today;
+                console.log('No saved date, using today:', today);
+            }
+        });
+    }
+    
     // Set up editing transaction
     const editButtons = document.querySelectorAll('.edit-transaction');
     for (let btn of editButtons) {
         btn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
+            const transactionId = this.getAttribute('data-id');
             const date = this.getAttribute('data-date');
             const description = this.getAttribute('data-description');
             const amount = this.getAttribute('data-amount');
@@ -291,96 +324,104 @@ document.addEventListener('DOMContentLoaded', function() {
             const classification = this.getAttribute('data-classification');
             const code = this.getAttribute('data-code');
             
-            document.getElementById('edit_transaction_id').value = id;
+            document.getElementById('edit_transaction_id').value = transactionId;
             document.getElementById('edit_date').value = date;
             document.getElementById('edit_description').value = description;
-            document.getElementById('edit_amount').value = Math.abs(amount);
+            document.getElementById('edit_amount').value = amount;
             document.getElementById('edit_type').value = type;
             document.getElementById('edit_classification').value = classification;
             document.getElementById('edit_code').value = code;
             
-            // Update the form action
-            document.getElementById('editTransactionForm').action = '/edit/' + id;
+            // Set the form action correctly
+            document.getElementById('editTransactionForm').action = "{{ url_for('edit_transaction', transaction_id=0) }}".replace('0', transactionId);
         });
     }
     
     // Set up deleting transaction
-    const deleteButtons = document.querySelectorAll('.delete-btn');
+    const deleteButtons = document.querySelectorAll('.delete-transaction');
     for (let btn of deleteButtons) {
         btn.addEventListener('click', function() {
-            const id = this.getAttribute('data-transaction-id');
+            const transactionId = this.getAttribute('data-id');
             const description = this.getAttribute('data-description');
             
-            document.getElementById('delete_transaction_id').value = id;
+            document.getElementById('delete_transaction_id').value = transactionId;
             document.getElementById('delete_transaction_description').textContent = description;
             
-            // Update the form action
-            document.getElementById('deleteTransactionForm').action = '/delete/' + id;
+            // Set the form action correctly
+            document.getElementById('deleteTransactionForm').action = "{{ url_for('delete_transaction', transaction_id=0) }}".replace('0', transactionId);
         });
     }
     
-    // Check code usage before deletion
-    const checkCodeButtons = document.querySelectorAll('.check-code-usage');
-    for (let btn of checkCodeButtons) {
-        btn.addEventListener('click', function() {
-            const form = this.closest('form');
-            const code = form.getAttribute('data-code');
+    // Set up print year form
+    document.getElementById('printYearForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const year = document.getElementById('print_year').value;
+        this.action = "{{ url_for('print_year_transactions', year=0) }}".replace('0', year);
+        this.submit();
+    });
+    
+    // Code deletion
+    const deleteCodeButtons = document.querySelectorAll('.delete-code');
+    deleteCodeButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const code = this.getAttribute('data-code');
             
-            fetch('/api/check_code_usage/' + code)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.in_use) {
-                        alert('This code is in use by existing transactions and cannot be deleted.');
-                    } else {
-                        if (confirm('Are you sure you want to delete the code "' + code + '"?')) {
-                            form.submit();
-                        }
-                    }
-                });
-        });
-    }
-    
-    // Check classification usage before deletion
-    const checkClassificationButtons = document.querySelectorAll('.check-classification-usage');
-    for (let btn of checkClassificationButtons) {
-        btn.addEventListener('click', function() {
-            const form = this.closest('form');
-            const classification = form.getAttribute('data-classification');
-            
-            fetch('/api/check_classification_usage/' + classification)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.in_use) {
-                        alert('This classification is in use by existing transactions and cannot be deleted.');
-                    } else {
-                        if (confirm('Are you sure you want to delete the classification "' + classification + '"?')) {
-                            form.submit();
-                        }
-                    }
-                });
-        });
-    }
-    
-    // Add event listener for print year button
-    const printYearButton = document.getElementById('submitPrintYear');
-    if (printYearButton) {
-        printYearButton.addEventListener('click', function() {
-            const year = document.getElementById('printYearInput').value;
-            if (year && year.length === 4) {
-                // Open the print year page in a new tab
-                window.open('/print/year/' + year, '_blank');
-                // Close the modal
-                const modal = bootstrap.Modal.getInstance(document.getElementById('printYearModal'));
-                if (modal) {
-                    modal.hide();
+            // First check if the code is in use
+            try {
+                const response = await fetch(`{{ url_for('check_code_usage', code='PLACEHOLDER') }}`.replace('PLACEHOLDER', encodeURIComponent(code)));
+                const data = await response.json();
+                
+                if (data.in_use) {
+                    alert(`Cannot delete code "${code}" because it is being used by ${data.count} transaction(s).`);
+                    return;
                 }
-            } else {
-                alert('Please enter a valid 4-digit year');
+                
+                // Not in use, proceed with deletion confirmation
+                if (confirm(`Are you sure you want to delete the code "${code}"?`)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `{{ url_for('delete_code', code='PLACEHOLDER') }}`.replace('PLACEHOLDER', encodeURIComponent(code));
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            } catch (error) {
+                console.error("Error checking code usage:", error);
+                alert("An error occurred while checking if the code is in use.");
             }
         });
-    }
+    });
+    
+    // Classification deletion
+    const deleteClassificationButtons = document.querySelectorAll('.delete-classification');
+    deleteClassificationButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const classification = this.getAttribute('data-classification');
+            
+            // First check if the classification is in use
+            try {
+                const response = await fetch(`{{ url_for('check_classification_usage', classification='PLACEHOLDER') }}`.replace('PLACEHOLDER', encodeURIComponent(classification)));
+                const data = await response.json();
+                
+                if (data.in_use) {
+                    alert(`Cannot delete classification "${classification}" because it is being used by ${data.count} transaction(s).`);
+                    return;
+                }
+                
+                // Not in use, proceed with deletion confirmation
+                if (confirm(`Are you sure you want to delete the classification "${classification}"?`)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `{{ url_for('delete_classification', classification='PLACEHOLDER') }}`.replace('PLACEHOLDER', encodeURIComponent(classification));
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            } catch (error) {
+                console.error("Error checking classification usage:", error);
+                alert("An error occurred while checking if the classification is in use.");
+            }
+        });
+    });
 });
 </script>
 {% endblock %}
-
-"""
+{% endblock %}"""
