@@ -188,10 +188,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Convert to Bootstrap modal objects
     const editCodesModalObj = new bootstrap.Modal(editCodesModal);
-    const deleteCodeModalObj = new bootstrap.Modal(deleteCodeModal);
-    const deleteClassificationModalObj = new bootstrap.Modal(deleteClassificationModal);
-    const codeUsageWarningModalObj = new bootstrap.Modal(codeUsageWarningModal);
-    const classificationUsageWarningModalObj = new bootstrap.Modal(classificationUsageWarningModal);
+    const deleteCodeModalObj = new bootstrap.Modal(deleteCodeModal, {
+        backdrop: 'static'  // Prevent clicks outside modal from closing it
+    });
+    const deleteClassificationModalObj = new bootstrap.Modal(deleteClassificationModal, {
+        backdrop: 'static'  // Prevent clicks outside modal from closing it
+    });
+    const codeUsageWarningModalObj = new bootstrap.Modal(codeUsageWarningModal, {
+        backdrop: 'static'  // Prevent clicks outside modal from closing it
+    });
+    const classificationUsageWarningModalObj = new bootstrap.Modal(classificationUsageWarningModal, {
+        backdrop: 'static'  // Prevent clicks outside modal from closing it
+    });
     
     // Handle initial data loading
     editCodesModal.addEventListener('show.bs.modal', function() {
@@ -199,16 +207,31 @@ document.addEventListener('DOMContentLoaded', function() {
         loadClassificationsPage(1);
     });
     
-    // Modal event listeners - clean up any existing modals when a modal is hidden
+    // Modal event listeners - handle backdrop stacking for nested modals
     document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('show.bs.modal', function() {
+            // When opening a new modal, check if there's already an open modal
+            const openModals = document.querySelectorAll('.modal.show');
+            if (openModals.length > 0) {
+                // Add additional z-index to handle stacking properly
+                const backdropZ = parseInt(window.getComputedStyle(document.querySelector('.modal-backdrop')).zIndex, 10);
+                document.querySelector('.modal-backdrop:last-child').style.zIndex = backdropZ + 2;
+                this.style.zIndex = backdropZ + 10;
+            }
+        });
+        
         modal.addEventListener('hidden.bs.modal', function() {
-            // Remove modal-open class
-            document.body.classList.remove('modal-open');
-            
-            // Remove any lingering backdrops
-            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                backdrop.remove();
-            });
+            // Remove modal-open class and any lingering backdrops
+            const openModals = document.querySelectorAll('.modal.show');
+            if (openModals.length === 0) {
+                document.body.classList.remove('modal-open');
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.remove();
+                });
+            } else {
+                // If there are still modals open, make sure body remains modal-open
+                document.body.classList.add('modal-open');
+            }
         });
     });
     
@@ -410,6 +433,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to check if a code is in use before deleting
     function checkCodeUsage(code) {
+        // Hide the edit codes modal first before showing the new modal
+        editCodesModalObj.hide();
+        
         fetch(`/api/check_code_usage/${encodeURIComponent(code)}`)
             .then(response => response.json())
             .then(data => {
@@ -428,11 +454,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error checking code usage:', error);
                 showToast('Error', 'Error checking code usage. Please try again later.', 'danger');
+                // Show the edit codes modal again if there's an error
+                editCodesModalObj.show();
             });
     }
     
     // Function to check if a classification is in use before deleting
     function checkClassificationUsage(classification) {
+        // Hide the edit codes modal first before showing the new modal
+        editCodesModalObj.hide();
+        
         fetch(`/api/check_classification_usage/${encodeURIComponent(classification)}`)
             .then(response => response.json())
             .then(data => {
@@ -451,6 +482,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error checking classification usage:', error);
                 showToast('Error', 'Error checking classification usage. Please try again later.', 'danger');
+                // Show the edit codes modal again if there's an error
+                editCodesModalObj.show();
             });
     }
     
@@ -470,17 +503,23 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Show success message
                 showToast('Success', `Code "${codeToDelete}" has been deleted.`, 'success');
+                // Show the edit codes modal again after successful deletion
+                editCodesModalObj.show();
                 // Reload the codes list
                 loadCodesPage(1);
             } else {
                 // Show error message
                 showToast('Error', data.message || 'Failed to delete code.', 'danger');
+                // Show the edit codes modal again
+                editCodesModalObj.show();
             }
         })
         .catch(error => {
             console.error('Error deleting code:', error);
             deleteCodeModalObj.hide();
             showToast('Error', 'Error deleting code. Please try again later.', 'danger');
+            // Show the edit codes modal again
+            editCodesModalObj.show();
         });
     });
     
@@ -499,17 +538,46 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Show success message
                 showToast('Success', `Classification "${classificationToDelete}" has been deleted.`, 'success');
+                // Show the edit codes modal again after successful deletion
+                editCodesModalObj.show();
                 // Reload the classifications list
                 loadClassificationsPage(1);
             } else {
                 // Show error message
                 showToast('Error', data.message || 'Failed to delete classification.', 'danger');
+                // Show the edit codes modal again
+                editCodesModalObj.show();
             }
         })
         .catch(error => {
             console.error('Error deleting classification:', error);
             deleteClassificationModalObj.hide();
             showToast('Error', 'Error deleting classification. Please try again later.', 'danger');
+            // Show the edit codes modal again
+            editCodesModalObj.show();
+        });
+    });
+    
+    // Additional event handlers for usage warning and confirmation modals
+    codeUsageWarningModal.addEventListener('hidden.bs.modal', function() {
+        // Re-open edit codes modal after closing the warning
+        editCodesModalObj.show();
+    });
+    
+    classificationUsageWarningModal.addEventListener('hidden.bs.modal', function() {
+        // Re-open edit codes modal after closing the warning
+        editCodesModalObj.show();
+    });
+    
+    // If user cancels deletion, re-open the edit codes modal
+    document.querySelectorAll('.modal .btn-secondary[data-bs-dismiss="modal"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimeout(() => {
+                // Give time for the current modal to close before showing the edit codes modal
+                if (!document.querySelector('.modal.show')) {
+                    editCodesModalObj.show();
+                }
+            }, 300);
         });
     });
     
@@ -548,4 +616,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 """
