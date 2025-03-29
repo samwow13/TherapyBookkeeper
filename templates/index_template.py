@@ -407,6 +407,79 @@ INDEX_TEMPLATE = """
     </div>
     {% endif %}
 </div>
+<<<<<<< HEAD
+=======
+{% else %}
+<!-- All Transactions (Displayed if No Month Selected) -->
+<div class="card mb-4">
+    <div class="card-header bg-light" id="allTransactionsHeader">
+        <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#allTransactionsCollapse" aria-expanded="false" aria-controls="allTransactionsCollapse">
+            <h5 class="mb-0 ms-3">Recent Transactions</h5>
+            <i class="bi bi-chevron-down me-3"></i>
+        </button>
+    </div>
+    <div id="allTransactionsCollapse" class="collapse" aria-labelledby="allTransactionsHeader">
+        <div class="card-body">
+            <!-- All Transactions Table -->
+            {% if recent_transactions %}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Showing {{ recent_transactions|length }} most recent transactions</h6>
+                <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print All</a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Code</th>
+                            <th>Classification</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in recent_transactions %}
+                        <tr data-transaction-id="{{ transaction.id }}">
+                            <td>{{ transaction.date }}</td>
+                            <td>{{ transaction.description }}</td>
+                            <td>{{ transaction.code }}</td>
+                            <td>{{ transaction.classification }}</td>
+                            <td class="text-end {% if transaction.type == 'credit' %}credit{% else %}debit{% endif %}">
+                                {{ '{:,.2f}'.format(transaction.amount) }}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-btn" data-bs-toggle="modal" data-bs-target="#editTransactionModal" 
+                                       data-transaction-id="{{ transaction.id }}"
+                                       data-date="{{ transaction.date }}"
+                                       data-description="{{ transaction.description }}"
+                                       data-amount="{{ transaction.amount }}"
+                                       data-type="{{ transaction.type }}"
+                                       data-classification="{{ transaction.classification }}"
+                                       data-code="{{ transaction.code }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#deleteTransactionModal" 
+                                       data-transaction-id="{{ transaction.id }}"
+                                       data-description="{{ transaction.description }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No transactions recorded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+>>>>>>> 2e17498c453538625ea2809139e2fb8fb00c1595
 {% endif %}
 
 {% endblock %}
