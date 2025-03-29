@@ -452,6 +452,35 @@ class TransactionManager:
         # Sort the months by date (most recent first)
         return dict(sorted(transactions_by_month.items(), reverse=True))
     
+    def get_transaction_by_id(self, transaction_id):
+        """
+        Get a single transaction by its ID.
+        
+        Args:
+            transaction_id: ID of the transaction to retrieve
+            
+        Returns:
+            Transaction data as a dictionary or None if not found
+        """
+        try:
+            db = self.get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT * FROM transactions WHERE id = ?", (transaction_id,))
+            transaction = cursor.fetchone()
+            
+            if transaction:
+                # Convert row to dictionary
+                columns = [column[0] for column in cursor.description]
+                transaction_dict = {columns[i]: transaction[i] for i in range(len(columns))}
+                print(f"Found transaction: {transaction_dict}")
+                return transaction_dict
+            else:
+                print(f"Transaction ID {transaction_id} not found in database")
+            return None
+        except sqlite3.Error as e:
+            print(f"Database error retrieving transaction {transaction_id}: {e}")
+            return None
+    
     def index_view(self, month=None):
         """
         Render the index view with transactions and financial summary.

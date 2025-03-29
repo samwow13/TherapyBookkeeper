@@ -5,6 +5,8 @@ Modals Template for the Therapy Bookkeeping Application.
 
 # Import the add transaction modal
 from templates.add_transaction_modal import ADD_TRANSACTION_MODAL, ADD_TRANSACTION_SCRIPT
+# Import edit transaction modal
+from templates.edit_transaction_modal import EDIT_TRANSACTION_MODAL, EDIT_TRANSACTION_SCRIPT
 # Import print modals
 from templates.print_modals import PRINT_MODALS_HTML, PRINT_MODALS_SCRIPT
 
@@ -13,63 +15,7 @@ MODALS_TEMPLATE = """
 {{ add_transaction_modal|safe }}
 
 <!-- Edit Transaction Modal -->
-<div class="modal fade" id="editTransactionModal" tabindex="-1" aria-labelledby="editTransactionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editTransactionModalLabel">Edit Transaction</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="editTransactionForm" action="/edit/" method="post">
-                <div class="modal-body">
-                    <input type="hidden" id="edit_transaction_id" name="transaction_id">
-                    <div class="mb-3">
-                        <label for="edit_date" class="form-label">Date</label>
-                        <input type="date" class="form-control" id="edit_date" name="date" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="edit_description" name="description" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_amount" class="form-label">Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" step="0.01" min="0.01" class="form-control" id="edit_amount" name="amount" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_type" class="form-label">Type</label>
-                        <select class="form-select" id="edit_type" name="type" required>
-                            <option value="credit">Credit (Income)</option>
-                            <option value="debit">Debit (Expense)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_classification" class="form-label">Classification</label>
-                        <select class="form-select" id="edit_classification" name="classification" required>
-                            {% for classification in classifications %}
-                            <option value="{{ classification }}">{{ classification }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_code" class="form-label">Code</label>
-                        <select class="form-select" id="edit_code" name="code" required>
-                            {% for code in codes %}
-                            <option value="{{ code }}">{{ code }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+{{ edit_transaction_modal|safe }}
 
 <!-- Delete Transaction Modal -->
 <div class="modal fade" id="deleteTransactionModal" tabindex="-1" aria-labelledby="deleteTransactionModalLabel" aria-hidden="true">
@@ -84,7 +30,7 @@ MODALS_TEMPLATE = """
                 <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <form id="deleteTransactionForm" method="post">
+                <form id="deleteTransactionForm" method="post" action="{{ url_for('delete_transaction', transaction_id=0) }}">
                     <input type="hidden" id="delete_transaction_id" name="transaction_id">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete Transaction</button>
@@ -205,46 +151,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add transaction modal scripts
     {{ add_transaction_script|safe }}
     
+    // Edit transaction modal scripts
+    {{ edit_transaction_script|safe }}
+    
     // Print modals scripts
     {{ print_modals_script|safe }}
     
-    // Set up editing transaction
-    const editButtons = document.querySelectorAll('.edit-transaction');
-    for (let btn of editButtons) {
-        btn.addEventListener('click', function() {
-            const transactionId = this.getAttribute('data-id');
-            const date = this.getAttribute('data-date');
-            const description = this.getAttribute('data-description');
-            const amount = this.getAttribute('data-amount');
-            const type = this.getAttribute('data-type');
-            const classification = this.getAttribute('data-classification');
-            const code = this.getAttribute('data-code');
-            
-            document.getElementById('edit_transaction_id').value = transactionId;
-            document.getElementById('edit_date').value = date;
-            document.getElementById('edit_description').value = description;
-            document.getElementById('edit_amount').value = amount;
-            document.getElementById('edit_type').value = type;
-            document.getElementById('edit_classification').value = classification;
-            document.getElementById('edit_code').value = code;
-            
-            // Set the form action correctly
-            document.getElementById('editTransactionForm').action = "{{ url_for('edit_transaction', transaction_id=0) }}".replace('0', transactionId);
-        });
-    }
-    
     // Set up deleting transaction
-    const deleteButtons = document.querySelectorAll('.delete-transaction');
+    const deleteButtons = document.querySelectorAll('.delete-btn');
     for (let btn of deleteButtons) {
         btn.addEventListener('click', function() {
-            const transactionId = this.getAttribute('data-id');
+            const transactionId = this.getAttribute('data-transaction-id');
             const description = this.getAttribute('data-description');
             
             document.getElementById('delete_transaction_id').value = transactionId;
             document.getElementById('delete_transaction_description').textContent = description;
             
-            // Set the form action correctly
-            document.getElementById('deleteTransactionForm').action = "{{ url_for('delete_transaction', transaction_id=0) }}".replace('0', transactionId);
+            // Set the form action correctly with the transaction ID
+            const form = document.getElementById('deleteTransactionForm');
+            form.action = form.action.replace('/0', '/' + transactionId);
         });
     }
     
