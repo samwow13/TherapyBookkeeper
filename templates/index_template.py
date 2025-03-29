@@ -218,7 +218,8 @@ INDEX_TEMPLATE = """
                             <button class="btn btn-outline-secondary" type="button" id="applyYearFilter">Filter</button>
                             <button class="btn btn-outline-secondary" type="button" id="clearYearFilter">Clear</button>
                         </div>
-                        <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print All</a>
+                        <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-printer"></i> Print All</a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#printYearModal"><i class="bi bi-printer"></i> Print By Year</button>
                     </div>
                 </div>
                 
@@ -297,7 +298,8 @@ INDEX_TEMPLATE = """
                             <button class="btn btn-outline-secondary" type="button" id="applyYearFilterFlat">Filter</button>
                             <button class="btn btn-outline-secondary" type="button" id="clearYearFilterFlat">Clear</button>
                         </div>
-                        <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print All</a>
+                        <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary me-2"><i class="bi bi-printer"></i> Print All</a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#printYearModal"><i class="bi bi-printer"></i> Print By Year</button>
                     </div>
                 </div>
                 
@@ -541,4 +543,5 @@ INDEX_TEMPLATE = """
 {% endblock %}
 
 {% include 'modals.html' %}
+
 """

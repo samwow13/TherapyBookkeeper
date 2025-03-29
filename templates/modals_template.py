@@ -134,7 +134,7 @@ MODALS_TEMPLATE = """{% block modals %}
                 <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <form id="deleteTransactionForm" action="/delete/" method="post">
+                <form id="deleteTransactionForm" method="post">
                     <input type="hidden" id="delete_transaction_id" name="transaction_id">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete Transaction</button>
@@ -202,6 +202,7 @@ MODALS_TEMPLATE = """{% block modals %}
                             <i class="bi bi-info-circle me-2"></i> Codes that are in use by existing transactions cannot be deleted.
                         </div>
                     </div>
+                    
                     <!-- Classifications Tab -->
                     <div class="tab-pane fade" id="classifications-content" role="tabpanel" aria-labelledby="classifications-tab">
                         <div class="row mb-3">
@@ -250,61 +251,136 @@ MODALS_TEMPLATE = """{% block modals %}
         </div>
     </div>
 </div>
+
+<!-- Print Year Modal -->
+<div class="modal fade" id="printYearModal" tabindex="-1" aria-labelledby="printYearModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="printYearModalLabel">Print Transactions by Year</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="printYearInput" class="form-label">Enter Year</label>
+                    <input type="number" class="form-control" id="printYearInput" min="2000" max="2100" value="{{ now.year }}" required>
+                    <div class="form-text">Enter the year you want to print transactions for.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitPrintYear">Print</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Initialize edit transaction modal with data
 document.addEventListener('DOMContentLoaded', function() {
-    const editTransactionModal = document.getElementById('editTransactionModal');
-    if (editTransactionModal) {
-        editTransactionModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
+    // Set up editing transaction
+    const editButtons = document.querySelectorAll('.edit-transaction');
+    for (let btn of editButtons) {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const date = this.getAttribute('data-date');
+            const description = this.getAttribute('data-description');
+            const amount = this.getAttribute('data-amount');
+            const type = this.getAttribute('data-type');
+            const classification = this.getAttribute('data-classification');
+            const code = this.getAttribute('data-code');
             
-            // Extract data from button attributes
-            const id = button.getAttribute('data-transaction-id');
-            const date = button.getAttribute('data-date');
-            const description = button.getAttribute('data-description');
-            const amount = button.getAttribute('data-amount');
-            const type = button.getAttribute('data-type');
-            const code = button.getAttribute('data-code');
-            const classification = button.getAttribute('data-classification');
-            
-            // Set values in form
             document.getElementById('edit_transaction_id').value = id;
             document.getElementById('edit_date').value = date;
             document.getElementById('edit_description').value = description;
-            document.getElementById('edit_amount').value = amount;
+            document.getElementById('edit_amount').value = Math.abs(amount);
             document.getElementById('edit_type').value = type;
-            document.getElementById('edit_code').value = code;
             document.getElementById('edit_classification').value = classification;
+            document.getElementById('edit_code').value = code;
             
-            // Update the form action with the correct transaction ID
-            const form = document.getElementById('editTransactionForm');
-            form.action = '/edit/' + id;
+            // Update the form action
+            document.getElementById('editTransactionForm').action = '/edit/' + id;
         });
     }
     
-    // Initialize delete transaction modal with data
-    const deleteTransactionModal = document.getElementById('deleteTransactionModal');
-    if (deleteTransactionModal) {
-        deleteTransactionModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
+    // Set up deleting transaction
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    for (let btn of deleteButtons) {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-transaction-id');
+            const description = this.getAttribute('data-description');
             
-            // Extract data from button attributes
-            const id = button.getAttribute('data-transaction-id');
-            const description = button.getAttribute('data-description');
-            
-            // Set values in form
             document.getElementById('delete_transaction_id').value = id;
             document.getElementById('delete_transaction_description').textContent = description;
             
-            // Update the form action with the correct transaction ID
-            const form = document.getElementById('deleteTransactionForm');
-            form.action = '/delete/' + id;
+            // Update the form action
+            document.getElementById('deleteTransactionForm').action = '/delete/' + id;
+        });
+    }
+    
+    // Check code usage before deletion
+    const checkCodeButtons = document.querySelectorAll('.check-code-usage');
+    for (let btn of checkCodeButtons) {
+        btn.addEventListener('click', function() {
+            const form = this.closest('form');
+            const code = form.getAttribute('data-code');
+            
+            fetch('/api/check_code_usage/' + code)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.in_use) {
+                        alert('This code is in use by existing transactions and cannot be deleted.');
+                    } else {
+                        if (confirm('Are you sure you want to delete the code "' + code + '"?')) {
+                            form.submit();
+                        }
+                    }
+                });
+        });
+    }
+    
+    // Check classification usage before deletion
+    const checkClassificationButtons = document.querySelectorAll('.check-classification-usage');
+    for (let btn of checkClassificationButtons) {
+        btn.addEventListener('click', function() {
+            const form = this.closest('form');
+            const classification = form.getAttribute('data-classification');
+            
+            fetch('/api/check_classification_usage/' + classification)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.in_use) {
+                        alert('This classification is in use by existing transactions and cannot be deleted.');
+                    } else {
+                        if (confirm('Are you sure you want to delete the classification "' + classification + '"?')) {
+                            form.submit();
+                        }
+                    }
+                });
+        });
+    }
+    
+    // Add event listener for print year button
+    const printYearButton = document.getElementById('submitPrintYear');
+    if (printYearButton) {
+        printYearButton.addEventListener('click', function() {
+            const year = document.getElementById('printYearInput').value;
+            if (year && year.length === 4) {
+                // Open the print year page in a new tab
+                window.open('/print/year/' + year, '_blank');
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('printYearModal'));
+                if (modal) {
+                    modal.hide();
+                }
+            } else {
+                alert('Please enter a valid 4-digit year');
+            }
         });
     }
 });
 </script>
 {% endblock %}
+
 """

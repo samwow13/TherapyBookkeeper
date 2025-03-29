@@ -71,7 +71,7 @@ def edit_transaction(transaction_id):
     """Handles editing an existing transaction."""
     return transaction_manager.edit_transaction(transaction_id)
 
-@app.route('/delete/<int:transaction_id>', methods=['POST'])
+@app.route('/delete/<int:transaction_id>', methods=['GET', 'POST'])
 def delete_transaction(transaction_id):
     """Handles deleting a transaction."""
     return transaction_manager.delete_transaction(transaction_id)

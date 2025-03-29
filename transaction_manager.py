@@ -146,20 +146,20 @@ class TransactionManager:
         Returns:
             A redirect to the index page
         """
-        if request.method == 'POST':
-            try:
-                # Delete transaction from database
-                db = self.get_db()
-                cursor = db.cursor()
-                cursor.execute("DELETE FROM transactions WHERE id=?", (transaction_id,))
-                db.commit()
-                
-                if cursor.rowcount > 0:
-                    flash('Transaction deleted successfully!', 'success')
-                else:
-                    flash('Transaction not found.', 'warning')
-            except sqlite3.Error as e:
-                flash(f'Database error: {e}', 'danger')
+        # Process the deletion regardless of request method (GET or POST)
+        try:
+            # Delete transaction from database
+            db = self.get_db()
+            cursor = db.cursor()
+            cursor.execute("DELETE FROM transactions WHERE id=?", (transaction_id,))
+            db.commit()
+            
+            if cursor.rowcount > 0:
+                flash('Transaction deleted successfully!', 'success')
+            else:
+                flash('Transaction not found.', 'warning')
+        except sqlite3.Error as e:
+            flash(f'Database error: {e}', 'danger')
                 
         return redirect(url_for('index'))
     

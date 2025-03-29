@@ -146,13 +146,13 @@ PRINT_TEMPLATE = """
     </div>
     {% endif %}
     
-    {% if pagination and pagination.pages > 1 %}
+    {% if pagination and pagination.get('total_pages', 0) > 1 %}
     <div class="pagination-container no-print">
         <nav aria-label="Transaction pagination">
             <ul class="pagination">
-                {% if pagination.has_prev %}
+                {% if pagination.get('has_prev', False) %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, **request.view_args) }}">Previous</a>
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.get('prev_num', 1), **request.view_args) }}">Previous</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
@@ -160,9 +160,9 @@ PRINT_TEMPLATE = """
                 </li>
                 {% endif %}
                 
-                {% for page in pagination.iter_pages() %}
+                {% for page in pagination.get('iter_pages', []) %}
                     {% if page %}
-                        {% if page != pagination.page %}
+                        {% if page != pagination.get('page', 1) %}
                         <li class="page-item">
                             <a class="page-link" href="{{ url_for(request.endpoint, page=page, **request.view_args) }}">{{ page }}</a>
                         </li>
@@ -178,9 +178,9 @@ PRINT_TEMPLATE = """
                     {% endif %}
                 {% endfor %}
                 
-                {% if pagination.has_next %}
+                {% if pagination.get('has_next', False) %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, **request.view_args) }}">Next</a>
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.get('next_num', 1), **request.view_args) }}">Next</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled">
