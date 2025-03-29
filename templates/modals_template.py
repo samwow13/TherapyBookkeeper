@@ -3,8 +3,7 @@
 Modals Template for the Therapy Bookkeeping Application.
 """
 
-MODALS_TEMPLATE = """
-{% block modals %}
+MODALS_TEMPLATE = """{% block modals %}
 <!-- Add Transaction Modal -->
 <div class="modal fade" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -71,7 +70,7 @@ MODALS_TEMPLATE = """
                 <h5 class="modal-title" id="editTransactionModalLabel">Edit Transaction</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ url_for('edit_transaction') }}" method="post">
+            <form id="editTransactionForm" action="/edit/" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_transaction_id" name="transaction_id">
                     <div class="mb-3">
@@ -135,7 +134,7 @@ MODALS_TEMPLATE = """
                 <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
-                <form action="{{ url_for('delete_transaction') }}" method="post">
+                <form id="deleteTransactionForm" action="/delete/" method="post">
                     <input type="hidden" id="delete_transaction_id" name="transaction_id">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-danger">Delete Transaction</button>
@@ -173,41 +172,36 @@ MODALS_TEMPLATE = """
                                 </form>
                             </div>
                         </div>
-                        
+                        {% if codes %}
                         <div class="table-responsive">
-                            <table class="table table-striped">
+                            <table class="table table-sm">
                                 <thead>
                                     <tr>
                                         <th>Code</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="codes-list">
                                     {% for code in codes %}
                                     <tr>
                                         <td>{{ code }}</td>
                                         <td>
-                                            <form action="{{ url_for('delete_code') }}" method="post" class="d-inline">
-                                                <input type="hidden" name="code" value="{{ code }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" {% if code_in_use(code) %}disabled{% endif %}>
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
+                                            <form action="{{ url_for('delete_code', code=code) }}" method="post" class="d-inline delete-code-form" data-code="{{ code }}">
+                                                <button type="button" class="btn btn-sm btn-outline-danger check-code-usage">Delete</button>
                                             </form>
                                         </td>
-                                    </tr>
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="2" class="text-center text-muted">No codes defined yet.</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                        {% else %}
+                        <p class="text-muted">No codes defined yet.</p>
+                        {% endif %}
                         <div class="alert alert-info mt-3">
                             <i class="bi bi-info-circle me-2"></i> Codes that are in use by existing transactions cannot be deleted.
                         </div>
                     </div>
-                    
                     <!-- Classifications Tab -->
                     <div class="tab-pane fade" id="classifications-content" role="tabpanel" aria-labelledby="classifications-tab">
                         <div class="row mb-3">
@@ -218,36 +212,32 @@ MODALS_TEMPLATE = """
                                 </form>
                             </div>
                         </div>
-                        
+                        {% if classifications %}
                         <div class="table-responsive">
-                            <table class="table table-striped">
+                            <table class="table table-sm">
                                 <thead>
                                     <tr>
                                         <th>Classification</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="classifications-list">
                                     {% for classification in classifications %}
                                     <tr>
                                         <td>{{ classification }}</td>
                                         <td>
-                                            <form action="{{ url_for('delete_classification') }}" method="post" class="d-inline">
-                                                <input type="hidden" name="classification" value="{{ classification }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" {% if classification_in_use(classification) %}disabled{% endif %}>
-                                                    <i class="bi bi-trash"></i> Delete
-                                                </button>
+                                            <form action="{{ url_for('delete_classification', classification=classification) }}" method="post" class="d-inline delete-classification-form" data-classification="{{ classification }}">
+                                                <button type="button" class="btn btn-sm btn-outline-danger check-classification-usage">Delete</button>
                                             </form>
                                         </td>
-                                    </tr>
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="2" class="text-center text-muted">No classifications defined yet.</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
+                        {% else %}
+                        <p class="text-muted">No classifications defined yet.</p>
+                        {% endif %}
                         <div class="alert alert-info mt-3">
                             <i class="bi bi-info-circle me-2"></i> Classifications that are in use by existing transactions cannot be deleted.
                         </div>
@@ -273,12 +263,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Extract data from button attributes
             const id = button.getAttribute('data-transaction-id');
-            const date = button.getAttribute('data-transaction-date');
-            const description = button.getAttribute('data-transaction-description');
-            const amount = button.getAttribute('data-transaction-amount');
-            const type = button.getAttribute('data-transaction-type');
-            const code = button.getAttribute('data-transaction-code');
-            const classification = button.getAttribute('data-transaction-classification');
+            const date = button.getAttribute('data-date');
+            const description = button.getAttribute('data-description');
+            const amount = button.getAttribute('data-amount');
+            const type = button.getAttribute('data-type');
+            const code = button.getAttribute('data-code');
+            const classification = button.getAttribute('data-classification');
             
             // Set values in form
             document.getElementById('edit_transaction_id').value = id;
@@ -288,6 +278,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('edit_type').value = type;
             document.getElementById('edit_code').value = code;
             document.getElementById('edit_classification').value = classification;
+            
+            // Update the form action with the correct transaction ID
+            const form = document.getElementById('editTransactionForm');
+            form.action = '/edit/' + id;
         });
     }
     
@@ -299,11 +293,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Extract data from button attributes
             const id = button.getAttribute('data-transaction-id');
-            const description = button.getAttribute('data-transaction-description');
+            const description = button.getAttribute('data-description');
             
             // Set values in form
             document.getElementById('delete_transaction_id').value = id;
             document.getElementById('delete_transaction_description').textContent = description;
+            
+            // Update the form action with the correct transaction ID
+            const form = document.getElementById('deleteTransactionForm');
+            form.action = '/delete/' + id;
         });
     }
 });
