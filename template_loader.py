@@ -10,6 +10,7 @@ from jinja2 import BaseLoader, TemplateNotFound
 from templates.base_template import BASE_TEMPLATE
 from templates.index_template import INDEX_TEMPLATE
 from templates.print_template import PRINT_TEMPLATE
+from templates.modals_template import MODALS_TEMPLATE
 
 class StringTemplateLoader(BaseLoader):
     """
@@ -21,7 +22,8 @@ class StringTemplateLoader(BaseLoader):
         self.templates = {
             'base_template_string': BASE_TEMPLATE,
             'index.html': INDEX_TEMPLATE,
-            'print.html': PRINT_TEMPLATE
+            'print.html': PRINT_TEMPLATE,
+            'modals.html': MODALS_TEMPLATE
         }
 
     def get_source(self, environment, template):

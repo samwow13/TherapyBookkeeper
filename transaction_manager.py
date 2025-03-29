@@ -388,6 +388,49 @@ class TransactionManager:
         
         return dict(code_totals)
     
+    def get_transactions_by_month_dict(self):
+        """
+        Get all transactions organized by month.
+        
+        Returns:
+            A dictionary with month_key as the key and transaction list for that month as value
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        
+        # Get all transactions
+        cursor.execute("SELECT * FROM transactions ORDER BY date DESC")
+        transactions = cursor.fetchall()
+        
+        # Group transactions by month
+        transactions_by_month = {}
+        
+        for tx in transactions:
+            # Extract year and month from date (format: YYYY-MM-DD)
+            if not tx['date']:
+                continue
+                
+            date_parts = tx['date'].split('-')
+            if len(date_parts) < 2:
+                continue
+                
+            year_month = f"{date_parts[0]}-{date_parts[1]}"
+            month_obj = datetime.strptime(year_month, '%Y-%m')
+            month_display = month_obj.strftime('%B %Y')
+            
+            # Initialize month data if not exists
+            if year_month not in transactions_by_month:
+                transactions_by_month[year_month] = {
+                    'month_name': month_display,
+                    'transactions': []
+                }
+            
+            # Add transaction to the month
+            transactions_by_month[year_month]['transactions'].append(tx)
+        
+        # Sort the months by date (most recent first)
+        return dict(sorted(transactions_by_month.items(), reverse=True))
+    
     def index_view(self, month=None):
         """
         Render the index view with transactions and financial summary.
@@ -455,6 +498,12 @@ class TransactionManager:
         # Get code summaries
         code_totals = self.calculate_code_totals()
         
+        # Get all transactions organized by month for the "All Transactions" section
+        transactions_by_month = self.get_transactions_by_month_dict()
+        
+        # Get all transactions for fallback if needed
+        all_transactions = self.get_all_transactions()
+        
         # Calculate overall totals for summary cards
         overall_income, overall_expense, overall_net = self.calculate_overall_totals()
         
@@ -472,9 +521,12 @@ class TransactionManager:
             overall_income=overall_income,
             overall_expense=overall_expense,
             overall_net=overall_net,
-            selected_month=month
+            selected_month=month,
+            transactions_by_month=transactions_by_month,
+            all_transactions=all_transactions,
+            monthly_transactions=transactions if month else None
         )
-
+        
     def print_month_view(self, month):
         """
         Render a print-friendly view of transactions for a given month.
