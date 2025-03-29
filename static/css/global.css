@@ -20,6 +20,12 @@ body { padding-bottom: 40px; background-color: #f8f9fa; }
     z-index: 1060 !important;
 }
 
+/* Footer should stay below modals */
+.footer {
+    position: relative;
+    z-index: -1 !important; /* Extremely low z-index to ensure it stays below modals */
+}
+
 /* Navigation bar styling */
 .navbar {
     background-color: #ffdac1 !important; /* Light peachy color matching monthlySummaryHeader */

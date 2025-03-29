@@ -59,10 +59,10 @@ BASE_TEMPLATE = """
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Modal Templates -->
+    <!-- Modal Templates (moved after footer to ensure proper stacking) -->
     {{ modals_content|safe }}
 
-    <!-- Footer -->
+    <!-- Footer with decreased importance in the stacking context -->
     <footer class="footer mt-auto py-3 bg-light">
         <div class="container">
             <span class="text-muted">Therapy Bookkeeping Application &copy; 2023</span>
