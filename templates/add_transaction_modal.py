@@ -13,7 +13,7 @@ ADD_TRANSACTION_MODAL = """
                 <h5 class="modal-title" id="addTransactionModalLabel">Add New Transaction</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/add_transaction" method="post" id="addTransactionForm">
+            <form action="/add" method="post" id="addTransactionForm">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="date" class="form-label">Date</label>
