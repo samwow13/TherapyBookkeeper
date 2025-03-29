@@ -83,6 +83,9 @@ BASE_TEMPLATE = """
     <script>
         {{ delete_transaction_script|safe }}
     </script>
+    <script>
+        {{ print_modals_script|safe }}
+    </script>
 
     <!-- Global Script -->
     <script>
