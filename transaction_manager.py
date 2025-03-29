@@ -58,7 +58,7 @@ class TransactionManager:
             classification = request.form.get('classification')
             
             # Validate inputs
-            if not date or not description or not amount or not transaction_type:
+            if not date or not amount or not transaction_type:
                 flash('All fields are required.', 'danger')
                 return redirect(url_for('index'))
             
@@ -105,7 +105,7 @@ class TransactionManager:
             classification = request.form.get('classification')
             
             # Validate inputs
-            if not date or not description or not amount or not transaction_type:
+            if not date or not amount or not transaction_type:
                 flash('All fields are required.', 'danger')
                 return redirect(url_for('index'))
             

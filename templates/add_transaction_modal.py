@@ -21,7 +21,7 @@ ADD_TRANSACTION_MODAL = """
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
-                        <input type="text" class="form-control" id="description" name="description" required>
+                        <input type="text" class="form-control" id="description" name="description">
                     </div>
                     <div class="mb-3">
                         <label for="code" class="form-label">Code</label>
