@@ -51,9 +51,6 @@ INDEX_TEMPLATE = """
             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editCodesModal">
                 <i class="bi bi-gear me-1"></i> Edit Codes
             </button>
-            <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-info text-white">
-                <i class="bi bi-printer me-1"></i> Print All
-            </a>
         </div>
     </div>
 </div>
