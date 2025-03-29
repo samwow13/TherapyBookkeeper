@@ -200,16 +200,18 @@ class TransactionManager:
         """
         db = self.get_db()
         cursor = db.cursor()
-        cursor.execute("SELECT date FROM transactions ORDER BY date DESC LIMIT 1")
-        result = cursor.fetchone()
         
-        # Debug output
-        if result:
-            print(f"DEBUG - Found most recent transaction with date: {result[0]}")
-        else:
-            print("DEBUG - No transactions found in database")
-            
-        return result[0] if result else None
+        try:
+            # Get the most recent transaction date
+            cursor.execute("SELECT date FROM transactions ORDER BY date DESC LIMIT 1")
+            result = cursor.fetchone()
+            if result:
+                return result['date']
+        except sqlite3.Error as e:
+            self.app.logger.error(f"Error getting recent date: {e}")
+            print(f"Error: {e}")
+        
+        return None
     
     def get_transactions_by_month(self, month):
         """
@@ -481,6 +483,61 @@ class TransactionManager:
             print(f"Database error retrieving transaction {transaction_id}: {e}")
             return None
     
+    def get_transaction(self, transaction_id):
+        """
+        Get a transaction by ID.
+        
+        Args:
+            transaction_id: ID of the transaction to retrieve
+            
+        Returns:
+            A dictionary containing transaction data or None if not found
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        
+        try:
+            cursor.execute("SELECT * FROM transactions WHERE id=?", (transaction_id,))
+            transaction = cursor.fetchone()
+            if transaction:
+                # Convert row to a dictionary
+                return dict(transaction)
+            return None
+        except sqlite3.Error as e:
+            self.app.logger.error(f"Error retrieving transaction: {e}")
+            print(f"Error retrieving transaction: {e}")
+            return None
+    
+    def update_transaction(self, transaction_id, date, description, amount, transaction_type, classification, code):
+        """
+        Update an existing transaction.
+        
+        Args:
+            transaction_id: ID of the transaction to update
+            date: Transaction date (YYYY-MM-DD)
+            description: Transaction description
+            amount: Transaction amount
+            transaction_type: Transaction type (credit or debit)
+            classification: Transaction classification
+            code: Transaction code
+            
+        Returns:
+            True if update was successful, False otherwise
+        """
+        try:
+            db = self.get_db()
+            cursor = db.cursor()
+            cursor.execute(
+                "UPDATE transactions SET date=?, description=?, amount=?, type=?, classification=?, code=? WHERE id=?",
+                (date, description, amount, transaction_type, classification, code, transaction_id)
+            )
+            db.commit()
+            return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            self.app.logger.error(f"Error updating transaction: {e}")
+            print(f"Error updating transaction: {e}")
+            return False
+            
     def index_view(self, month=None):
         """
         Render the index view with transactions and financial summary.
@@ -503,6 +560,15 @@ class TransactionManager:
         
         cursor.execute("SELECT classification FROM classifications ORDER BY classification")
         classifications = [row['classification'] for row in cursor.fetchall()]
+        
+        # Create HTML options for dropdowns
+        classification_options = ""
+        for classification in classifications:
+            classification_options += f'<option value="{classification}">{classification}</option>'
+            
+        code_options = ""
+        for code in codes:
+            code_options += f'<option value="{code}">{code}</option>'
         
         # Get transactions based on month filter
         if month:
@@ -563,6 +629,8 @@ class TransactionManager:
             transactions=transactions,
             codes=codes,
             classifications=classifications,
+            classification_options=classification_options,
+            code_options=code_options,
             income=income,
             expenses=expenses,
             net_income=net_income,

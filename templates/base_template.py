@@ -9,11 +9,11 @@ BASE_TEMPLATE = """
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Therapist Bookkeeping</title>
+    <title>Therapy Bookkeeping | {{ title }}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         body { padding-bottom: 40px; background-color: #f8f9fa; }
         .container { max-width: 1100px; position: relative; z-index: 1; }
@@ -83,20 +83,17 @@ BASE_TEMPLATE = """
         .rainbow-band-6 { background: indigo; animation-delay: -10.5s; }
         .rainbow-band-7 { background: violet; animation-delay: -12.6s; }
 
+        /* Rainbow animation keyframes */
         @keyframes slideVerticalLeft {
-            0% { transform: translateY(-100%); } /* Start above */
-            100% { transform: translateY(100%); } /* End below */
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
         }
         @keyframes slideVerticalRight {
-            0% { transform: translateY(100%); } /* Start below */
-            100% { transform: translateY(-100%); } /* End above */
+            0% { transform: translateY(100%); }
+            100% { transform: translateY(-100%); }
         }
-
 
         /* MODAL CSS FIXES */
-        .modal-backdrop {
-            z-index: 1050 !important; /* Backdrop behind modal */
-        }
         .modal {
             z-index: 1060 !important; /* Modal container */
             overflow-y: auto; /* Ensure modal itself can scroll if content is long */
@@ -124,6 +121,67 @@ BASE_TEMPLATE = """
         }
         /* END MODAL CSS FIXES */
 
+        /* Custom styling for the application */
+        .account-summary-card {
+            transition: all 0.3s;
+        }
+        
+        .account-summary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-add-transaction, .btn-edit-codes {
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-add-transaction {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+        
+        .btn-edit-codes {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+        }
+        
+        .btn-add-transaction:hover, .btn-edit-codes:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-content {
+            pointer-events: auto !important;
+        }
+        
+        .modal-backdrop {
+            opacity: 0.5 !important; 
+            z-index: 1040 !important;
+        }
+        
+        .modal {
+            z-index: 1050 !important;
+        }
+        
+        /* Ensure form elements are interactive */
+        .modal-body .form-control,
+        .modal-body .form-select,
+        .modal-footer .btn {
+            position: relative;
+            z-index: 1051 !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Fix for modal backdrop issue */
+        body.modal-open {
+            overflow: auto !important;
+            padding-right: 0 !important;
+        }
     </style>
 </head>
 <body>
@@ -168,9 +226,140 @@ BASE_TEMPLATE = """
         {% block content %}{% endblock %}
     </div>
 
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span class="text-muted">Therapy Bookkeeping Application &copy; 2023</span>
+        </div>
+    </footer>
+
     <!-- Bootstrap JS Bundle (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    {% block scripts %}{% endblock %} {# Placeholder for page-specific scripts #}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Modal Templates -->
+    {{ modals_content|safe }}
+
+    <!-- Custom styles to fix modal issues -->
+    <style>
+        /* Ensure modals are displayed on top of other elements */
+        .modal {
+            z-index: 1050 !important;
+        }
+        
+        /* Fix modal backdrop */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+        
+        /* Ensure input fields are clickable */
+        .modal-content input,
+        .modal-content select,
+        .modal-content button {
+            z-index: 1060 !important;
+            position: relative;
+        }
+    </style>
+    
+    <!-- Modal-specific JavaScript -->
+    <script>
+        // Ensure the modal works correctly
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remove any existing backdrops
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+            
+            // Reset body classes that might be stuck
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+            
+            // Direct fix: Override Bootstrap's modal backdrop click handling
+            const fixModal = function() {
+                // Remove any stale backdrops
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                
+                // Get buttons that open the add transaction modal
+                const buttons = document.querySelectorAll('[data-bs-target="#addTransactionModal"]');
+                
+                buttons.forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        // Prevent the default Bootstrap modal behavior
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Get the modal element
+                        const modalEl = document.querySelector('#addTransactionModal');
+                        
+                        // Manually show the modal
+                        if (modalEl) {
+                            // Create a fresh backdrop
+                            const backdropEl = document.createElement('div');
+                            backdropEl.className = 'modal-backdrop fade show';
+                            backdropEl.style.zIndex = '1040';
+                            document.body.appendChild(backdropEl);
+                            
+                            // Show the modal
+                            modalEl.style.display = 'block';
+                            modalEl.classList.add('show');
+                            modalEl.setAttribute('aria-modal', 'true');
+                            modalEl.removeAttribute('aria-hidden');
+                            
+                            // Make sure the modal is on top and interactive
+                            modalEl.style.zIndex = '1050';
+                            
+                            // Ensure inputs are clickable
+                            modalEl.querySelectorAll('input, select, button').forEach(el => {
+                                el.style.zIndex = '1060';
+                                el.style.position = 'relative';
+                                el.style.pointerEvents = 'auto';
+                            });
+                            
+                            // Add listener for close button
+                            modalEl.querySelectorAll('[data-bs-dismiss="modal"]').forEach(closeBtn => {
+                                closeBtn.addEventListener('click', function() {
+                                    modalEl.style.display = 'none';
+                                    modalEl.classList.remove('show');
+                                    modalEl.setAttribute('aria-hidden', 'true');
+                                    modalEl.removeAttribute('aria-modal');
+                                    
+                                    // Remove the backdrop
+                                    document.querySelectorAll('.modal-backdrop').forEach(bd => bd.remove());
+                                });
+                            });
+                            
+                            // Set form values
+                            const dateField = modalEl.querySelector('#date');
+                            if (dateField) {
+                                const lastDate = localStorage.getItem('lastTransactionDate');
+                                if (lastDate) {
+                                    dateField.value = lastDate;
+                                } else {
+                                    const today = new Date().toISOString().split('T')[0];
+                                    dateField.value = today;
+                                }
+                            }
+                        }
+                    });
+                });
+            };
+            
+            // Run the fix immediately and also after a short delay (for dynamic content)
+            fixModal();
+            setTimeout(fixModal, 500);
+        });
+        
+        {{ add_transaction_script|safe }}
+        {{ edit_transaction_script|safe }}
+        {{ delete_transaction_script|safe }}
+        
+        // Additional global scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Therapy Bookkeeping App initialized');
+        });
+    </script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block scripts %}{% endblock %}
 </body>
 </html>
 """

@@ -60,12 +60,51 @@ def inject_date_context():
         'now': datetime.now(),  # Keep the original now variable
         'today_date': today,    # Today's date formatted as YYYY-MM-DD
         'suggested_date': suggested_date,  # Either recent transaction date or today
-        'add_transaction_modal': ADD_TRANSACTION_MODAL,  # Add the transaction modal HTML
-        'add_transaction_script': ADD_TRANSACTION_SCRIPT,  # Add the transaction modal script
-        'edit_transaction_modal': EDIT_TRANSACTION_MODAL,  # Add the edit transaction modal HTML
-        'edit_transaction_script': EDIT_TRANSACTION_SCRIPT,  # Add the edit transaction modal script
-        'print_modals_html': PRINT_MODALS_HTML,  # Add the print modals HTML
-        'print_modals_script': PRINT_MODALS_SCRIPT  # Add the print modals script
+    }
+
+@app.context_processor
+def inject_modal_data():
+    """
+    Inject modal data into all templates.
+    This makes modal templates available in all templates rendered by the app.
+    """
+    from templates.modals_template import (
+        MODALS_TEMPLATE, 
+        ADD_TRANSACTION_SCRIPT_TEMPLATE, 
+        EDIT_TRANSACTION_SCRIPT_TEMPLATE,
+        DELETE_TRANSACTION_SCRIPT_TEMPLATE
+    )
+    
+    # Default empty options
+    classification_options = ""
+    code_options = ""
+    
+    # Only try to fetch data if database connection is available
+    if hasattr(g, 'db'):
+        try:
+            db = g.db
+            cursor = db.cursor()
+            
+            # Get classifications for dropdown
+            cursor.execute("SELECT classification FROM classifications ORDER BY classification")
+            classifications = [row['classification'] for row in cursor.fetchall()]
+            classification_options = "".join([f'<option value="{c}">{c}</option>' for c in classifications])
+            
+            # Get codes for dropdown
+            cursor.execute("SELECT code FROM codes ORDER BY code")
+            codes = [row['code'] for row in cursor.fetchall()]
+            code_options = "".join([f'<option value="{c}">{c}</option>' for c in codes])
+        except Exception as e:
+            # Log the error but don't crash
+            print(f"Error fetching dropdown data: {e}")
+    
+    return {
+        'modals_content': MODALS_TEMPLATE,
+        'add_transaction_script': ADD_TRANSACTION_SCRIPT_TEMPLATE,
+        'edit_transaction_script': EDIT_TRANSACTION_SCRIPT_TEMPLATE,
+        'delete_transaction_script': DELETE_TRANSACTION_SCRIPT_TEMPLATE,
+        'classification_options': classification_options,
+        'code_options': code_options,
     }
 
 # --- Routes ---
@@ -97,8 +136,23 @@ def add_transaction():
 
 @app.route('/edit/<int:transaction_id>', methods=['POST'])
 def edit_transaction(transaction_id):
-    """Handles editing an existing transaction."""
-    return transaction_manager.edit_transaction(transaction_id)
+    """Handle the edit transaction form submission."""
+    # Get form data
+    date = request.form["date"]
+    description = request.form["description"]
+    amount = float(request.form["amount"])
+    transaction_type = request.form["type"]
+    classification = request.form["classification"]
+    code = request.form["code"]
+    
+    # Update the transaction in the database
+    transaction_manager.update_transaction(
+        transaction_id, date, description, amount, 
+        transaction_type, classification, code
+    )
+    
+    flash(f"Transaction '{description}' was updated successfully!", "success")
+    return redirect(url_for("index"))
 
 @app.route('/delete/<int:transaction_id>', methods=['GET', 'POST'])
 def delete_transaction(transaction_id):
@@ -148,11 +202,12 @@ def get_classifications_page(page):
 
 @app.route('/api/transaction/<int:transaction_id>')
 def get_transaction(transaction_id):
-    """Get a single transaction by its ID."""
-    transaction = transaction_manager.get_transaction_by_id(transaction_id)
+    """API endpoint to get transaction data for editing."""
+    transaction = transaction_manager.get_transaction(transaction_id)
     if transaction:
         return jsonify(transaction)
-    return jsonify({"error": "Transaction not found"}), 404
+    else:
+        return jsonify({"error": "Transaction not found"}), 404
 
 @app.route('/init_db')
 def init_db_route():

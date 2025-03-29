@@ -21,7 +21,6 @@ var/
 *.egg
 
 # Database files
-*.db
 *.sqlite
 *.sqlite3
 

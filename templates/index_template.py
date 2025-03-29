@@ -44,13 +44,16 @@ INDEX_TEMPLATE = """
         <h5 class="mb-0">Actions</h5>
     </div>
     <div class="card-body">
-        <div class="d-flex justify-content-center gap-3">
-            <button type="button" class="btn btn-edit-codes" data-bs-toggle="modal" data-bs-target="#editCodesModal">
-                <i class="bi bi-gear"></i> Edit Available Codes & Classifications
+        <div class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                <i class="bi bi-plus-circle me-1"></i> Add Transaction
             </button>
-            <button type="button" class="btn btn-add-transaction" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
-                <i class="bi bi-plus-circle"></i> Add New Transaction
+            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editCodesModal">
+                <i class="bi bi-gear me-1"></i> Edit Codes
             </button>
+            <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-info text-white">
+                <i class="bi bi-printer me-1"></i> Print All
+            </a>
         </div>
     </div>
 </div>
@@ -540,8 +543,7 @@ INDEX_TEMPLATE = """
 </div>
 {% endif %}
 
-{% endblock %}
-
 {% include 'modals.html' %}
+{% endblock %}
 
 """

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Edit Transaction Modal Template for the Therapy Bookkeeping Application.
-This file contains the HTML template and scripts for the Edit Transaction modal.
+This file contains the HTML template for the Edit Transaction modal.
 """
 
 EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
@@ -12,7 +12,7 @@ EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
                 <h5 class="modal-title" id="editTransactionModalLabel">Edit Transaction</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editTransactionForm" action="" method="post">
+            <form id="editTransactionForm" action="{{ url_for('edit_transaction', transaction_id=0) }}" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="edit_transaction_id" name="transaction_id">
                     <div class="mb-3">
@@ -40,17 +40,13 @@ EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
                     <div class="mb-3">
                         <label for="edit_classification" class="form-label">Classification</label>
                         <select class="form-select" id="edit_classification" name="classification" required>
-                            {% for classification in classifications %}
-                            <option value="{{ classification }}">{{ classification }}</option>
-                            {% endfor %}
+                            {{ classification_options|safe }}
                         </select>
                     </div>
                     <div class="mb-3">
                         <label for="edit_code" class="form-label">Code</label>
                         <select class="form-select" id="edit_code" name="code" required>
-                            {% for code in codes %}
-                            <option value="{{ code }}">{{ code }}</option>
-                            {% endfor %}
+                            {{ code_options|safe }}
                         </select>
                     </div>
                 </div>
@@ -63,139 +59,67 @@ EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
     </div>
 </div>"""
 
-# JavaScript functions related to the Edit Transaction modal
+# JavaScript to handle the Edit Transaction modal
 EDIT_TRANSACTION_SCRIPT = """
-// Set up editing transaction functionality
+// Set form values when edit modal is shown
 document.addEventListener('DOMContentLoaded', function() {
-    // Find all edit buttons and attach event listeners
+    // Handle edit button clicks to load transaction data
     const editButtons = document.querySelectorAll('.edit-btn');
-    
-    editButtons.forEach(btn => {
+    for (let btn of editButtons) {
         btn.addEventListener('click', function() {
-            // Get transaction ID from button attribute
             const transactionId = this.getAttribute('data-transaction-id');
-            
-            if (!transactionId) {
-                console.error('No transaction ID provided');
-                return;
-            }
-            
-            console.log('Edit button clicked for transaction ID:', transactionId);
-            
-            // Fetch transaction data from API
-            fetch(`/api/transaction/${transactionId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(transaction => {
-                    console.log('Transaction data loaded:', transaction);
-                    
-                    // Set form values from API data
-                    document.getElementById('edit_transaction_id').value = transaction.id;
-                    document.getElementById('edit_date').value = transaction.date;
-                    document.getElementById('edit_description').value = transaction.description;
-                    document.getElementById('edit_amount').value = transaction.amount;
-                    document.getElementById('edit_type').value = transaction.type;
-                    
-                    // Select the correct classification option
-                    const classificationSelect = document.getElementById('edit_classification');
-                    for (let i = 0; i < classificationSelect.options.length; i++) {
-                        if (classificationSelect.options[i].value === transaction.classification) {
-                            classificationSelect.selectedIndex = i;
-                            break;
-                        }
-                    }
-                    
-                    // Select the correct code option
-                    const codeSelect = document.getElementById('edit_code');
-                    for (let i = 0; i < codeSelect.options.length; i++) {
-                        if (codeSelect.options[i].value === transaction.code) {
-                            codeSelect.selectedIndex = i;
-                            break;
-                        }
-                    }
-                    
-                    // Set the form action URL
-                    document.getElementById('editTransactionForm').action = "/edit/" + transaction.id;
-                })
-                .catch(error => {
-                    console.error('Error fetching transaction data:', error);
-                    alert('Failed to load transaction data. Please try again.');
-                });
+            loadTransactionData(transactionId);
         });
-    });
+    }
     
-    // Set up modal event handler for when the edit modal is shown
-    const editTransactionModal = document.getElementById('editTransactionModal');
-    if (editTransactionModal) {
-        editTransactionModal.addEventListener('show.bs.modal', function(event) {
-            // Get the button that triggered the modal
-            const button = event.relatedTarget;
-            
-            if (button && button.classList.contains('edit-btn')) {
-                // Get transaction ID from button attribute
-                const transactionId = button.getAttribute('data-transaction-id');
-                
-                if (!transactionId) {
-                    console.error('No transaction ID provided');
-                    return;
-                }
-                
-                console.log('Modal shown for transaction ID:', transactionId);
-                
-                // Fetch transaction data from API
-                fetch(`/api/transaction/${transactionId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(transaction => {
-                        console.log('Transaction data loaded:', transaction);
-                        
-                        // Set form values from API data
-                        document.getElementById('edit_transaction_id').value = transaction.id;
-                        document.getElementById('edit_date').value = transaction.date;
-                        document.getElementById('edit_description').value = transaction.description;
-                        document.getElementById('edit_amount').value = transaction.amount;
-                        document.getElementById('edit_type').value = transaction.type;
-                        
-                        // Select the correct classification option
-                        const classificationSelect = document.getElementById('edit_classification');
-                        for (let i = 0; i < classificationSelect.options.length; i++) {
-                            if (classificationSelect.options[i].value === transaction.classification) {
-                                classificationSelect.selectedIndex = i;
-                                break;
-                            }
-                        }
-                        
-                        // Select the correct code option
-                        const codeSelect = document.getElementById('edit_code');
-                        for (let i = 0; i < codeSelect.options.length; i++) {
-                            if (codeSelect.options[i].value === transaction.code) {
-                                codeSelect.selectedIndex = i;
-                                break;
-                            }
-                        }
-                        
-                        // Set the form action URL
-                        document.getElementById('editTransactionForm').action = "/edit/" + transaction.id;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching transaction data:', error);
-                        alert('Failed to load transaction data. Please try again.');
-                    });
+    // Function to fetch and load transaction data
+    async function loadTransactionData(id) {
+        try {
+            const response = await fetch(`{{ url_for('get_transaction', transaction_id=0) }}`.replace('0', id));
+            if (!response.ok) {
+                throw new Error('Failed to fetch transaction data');
             }
-        });
-        
-        // Reset form when modal is hidden
-        editTransactionModal.addEventListener('hidden.bs.modal', function() {
-            document.getElementById('editTransactionForm').reset();
-        });
+            
+            const transaction = await response.json();
+            console.log('Loaded transaction data:', transaction);
+            
+            // Set form action
+            const form = document.getElementById('editTransactionForm');
+            form.action = form.action.replace('/0', '/' + id);
+            
+            // Set hidden id field
+            document.getElementById('edit_transaction_id').value = id;
+            
+            // Set other form fields
+            document.getElementById('edit_date').value = transaction.date;
+            document.getElementById('edit_description').value = transaction.description;
+            document.getElementById('edit_amount').value = transaction.amount;
+            document.getElementById('edit_type').value = transaction.type;
+            
+            // Set dropdown values - need to match values precisely
+            const classificationSelect = document.getElementById('edit_classification');
+            const codeSelect = document.getElementById('edit_code');
+            
+            // Find and select the correct classification option
+            for (let i = 0; i < classificationSelect.options.length; i++) {
+                if (classificationSelect.options[i].value === transaction.classification) {
+                    classificationSelect.selectedIndex = i;
+                    break;
+                }
+            }
+            
+            // Find and select the correct code option
+            for (let i = 0; i < codeSelect.options.length; i++) {
+                if (codeSelect.options[i].value === transaction.code) {
+                    codeSelect.selectedIndex = i;
+                    break;
+                }
+            }
+            
+        } catch (error) {
+            console.error('Error loading transaction data:', error);
+            alert('Failed to load transaction data. Please try again.');
+        }
     }
 });
 """
