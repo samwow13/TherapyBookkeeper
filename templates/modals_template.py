@@ -5,6 +5,8 @@ Modals Template for the Therapy Bookkeeping Application.
 
 # Import the add transaction modal
 from templates.add_transaction_modal import ADD_TRANSACTION_MODAL, ADD_TRANSACTION_SCRIPT
+# Import print modals
+from templates.print_modals import PRINT_MODALS_HTML, PRINT_MODALS_SCRIPT
 
 MODALS_TEMPLATE = """
 <!-- Add Transaction Modal -->
@@ -194,39 +196,17 @@ MODALS_TEMPLATE = """
     </div>
 </div>
 
-<!-- Print Year Modal -->
-<div class="modal fade" id="printYearModal" tabindex="-1" aria-labelledby="printYearModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="printYearModalLabel">Print Year Report</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ url_for('print_year_transactions', year=0) }}" method="get" id="printYearForm">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="print_year" class="form-label">Select Year</label>
-                        <select class="form-select" id="print_year" name="year" required>
-                            {% for year in available_years %}
-                            <option value="{{ year }}">{{ year }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Generate Report</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Print Modals -->
+{{ print_modals_html|safe }}
 
 <!-- Modal Scripts -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Add transaction modal scripts
     {{ add_transaction_script|safe }}
+    
+    // Print modals scripts
+    {{ print_modals_script|safe }}
     
     // Set up editing transaction
     const editButtons = document.querySelectorAll('.edit-transaction');
@@ -267,14 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('deleteTransactionForm').action = "{{ url_for('delete_transaction', transaction_id=0) }}".replace('0', transactionId);
         });
     }
-    
-    // Set up print year form
-    document.getElementById('printYearForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const year = document.getElementById('print_year').value;
-        this.action = "{{ url_for('print_year_transactions', year=0) }}".replace('0', year);
-        this.submit();
-    });
     
     // Code deletion
     const deleteCodeButtons = document.querySelectorAll('.delete-code');

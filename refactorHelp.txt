@@ -1,0 +1,28 @@
+General Principles for Code Modularization
+One Component, One File
+Each logical UI component should reside in its own dedicated file
+Follow a consistent naming convention: component_name.py
+Export components as uppercase constants (e.g., COMPONENT_HTML, COMPONENT_SCRIPT)
+Maintain Clear Separation
+Separate HTML structure from JavaScript functionality
+Maintain CSS in existing stylesheets or create component-specific styles when needed
+Use helpful comments to delineate sections and explain complex logic
+Integration Best Practices
+Import component parts in the main template files using standard Python imports
+Include components with the |safe filter to ensure proper rendering
+Avoid using conflicting Jinja2 block tags in component templates
+Ensure components maintain proper Bootstrap structure and attributes
+Template Registration
+Only register main template files in the template loader
+Component files should be imported by their parent templates
+Update context variables in relevant route handlers to make components accessible
+Testing and Verification
+After each refactor, verify that components render correctly
+Check that all functionality (event handlers, modals, etc.) continues to work
+Ensure responsive behavior is maintained across different screen sizes
+Refactoring Workflow
+Analyze: Identify the component's structure, dependencies, and functionality
+Extract: Move the component to its own file with consistent variable naming
+Import: Update parent templates to import and use the extracted component
+Test: Verify the component works correctly after refactoring
+Repeat: Apply the same process to the next component
