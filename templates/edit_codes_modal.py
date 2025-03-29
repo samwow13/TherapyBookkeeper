@@ -89,19 +89,128 @@ EDIT_CODES_MODAL = """
         </div>
     </div>
 </div>
+
+<!-- Delete Code Confirmation Modal -->
+<div class="modal fade" id="deleteCodeModal" tabindex="-1" aria-labelledby="deleteCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCodeModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this code?</p>
+                <input type="hidden" id="codeToDelete">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteCode">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Classification Confirmation Modal -->
+<div class="modal fade" id="deleteClassificationModal" tabindex="-1" aria-labelledby="deleteClassificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteClassificationModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this classification?</p>
+                <input type="hidden" id="classificationToDelete">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteClassification">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Code Usage Warning Modal -->
+<div class="modal fade" id="codeUsageWarningModal" tabindex="-1" aria-labelledby="codeUsageWarningModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="codeUsageWarningModalLabel">Cannot Delete Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="codeUsageWarningText"></span>
+                </div>
+                <p>Please update or delete these transactions first before deleting this code.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Understood</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Classification Usage Warning Modal -->
+<div class="modal fade" id="classificationUsageWarningModal" tabindex="-1" aria-labelledby="classificationUsageWarningModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="classificationUsageWarningModalLabel">Cannot Delete Classification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span id="classificationUsageWarningText"></span>
+                </div>
+                <p>Please update or delete these transactions first before deleting this classification.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Understood</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 """
 
 # JavaScript functions related to the Edit Codes and Classifications modal
 EDIT_CODES_SCRIPT = """
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize modals
     const editCodesModal = document.getElementById('editCodesModal');
-    if (editCodesModal) {
-        editCodesModal.addEventListener('show.bs.modal', function() {
-            // Load initial data when modal is shown
-            loadCodesPage(1);
-            loadClassificationsPage(1);
+    const deleteCodeModal = document.getElementById('deleteCodeModal');
+    const deleteClassificationModal = document.getElementById('deleteClassificationModal');
+    const codeUsageWarningModal = document.getElementById('codeUsageWarningModal');
+    const classificationUsageWarningModal = document.getElementById('classificationUsageWarningModal');
+    
+    // Convert to Bootstrap modal objects
+    const editCodesModalObj = new bootstrap.Modal(editCodesModal);
+    const deleteCodeModalObj = new bootstrap.Modal(deleteCodeModal);
+    const deleteClassificationModalObj = new bootstrap.Modal(deleteClassificationModal);
+    const codeUsageWarningModalObj = new bootstrap.Modal(codeUsageWarningModal);
+    const classificationUsageWarningModalObj = new bootstrap.Modal(classificationUsageWarningModal);
+    
+    // Handle initial data loading
+    editCodesModal.addEventListener('show.bs.modal', function() {
+        loadCodesPage(1);
+        loadClassificationsPage(1);
+    });
+    
+    // Modal event listeners - clean up any existing modals when a modal is hidden
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Remove modal-open class
+            document.body.classList.remove('modal-open');
+            
+            // Remove any lingering backdrops
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.remove();
+            });
         });
-    }
+    });
     
     // Function to load codes with pagination
     function loadCodesPage(page) {
@@ -305,19 +414,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.in_use) {
-                    // Code is in use, show warning
-                    alert(`Cannot delete code "${code}" because it is in use by ${data.count} transaction(s).`);
+                    // Code is in use, show warning modal
+                    document.getElementById('codeUsageWarningText').textContent = 
+                        `Cannot delete code "${code}" because it is in use by ${data.count} transaction(s).`;
+                    codeUsageWarningModalObj.show();
                 } else {
-                    // Code is not in use, confirm deletion
-                    if (confirm(`Are you sure you want to delete code "${code}"?`)) {
-                        // Redirect to delete code route
-                        window.location.href = `/delete_code/${encodeURIComponent(code)}`;
-                    }
+                    // Code is not in use, show confirmation modal
+                    document.getElementById('deleteCodeModalLabel').textContent = `Delete Code: ${code}`;
+                    document.getElementById('codeToDelete').value = code;
+                    deleteCodeModalObj.show();
                 }
             })
             .catch(error => {
                 console.error('Error checking code usage:', error);
-                alert('Error checking code usage. Please try again later.');
+                showToast('Error', 'Error checking code usage. Please try again later.', 'danger');
             });
     }
     
@@ -327,20 +437,115 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.in_use) {
-                    // Classification is in use, show warning
-                    alert(`Cannot delete classification "${classification}" because it is in use by ${data.count} transaction(s).`);
+                    // Classification is in use, show warning modal
+                    document.getElementById('classificationUsageWarningText').textContent = 
+                        `Cannot delete classification "${classification}" because it is in use by ${data.count} transaction(s).`;
+                    classificationUsageWarningModalObj.show();
                 } else {
-                    // Classification is not in use, confirm deletion
-                    if (confirm(`Are you sure you want to delete classification "${classification}"?`)) {
-                        // Redirect to delete classification route
-                        window.location.href = `/delete_classification/${encodeURIComponent(classification)}`;
-                    }
+                    // Classification is not in use, show confirmation modal
+                    document.getElementById('deleteClassificationModalLabel').textContent = `Delete Classification: ${classification}`;
+                    document.getElementById('classificationToDelete').value = classification;
+                    deleteClassificationModalObj.show();
                 }
             })
             .catch(error => {
                 console.error('Error checking classification usage:', error);
-                alert('Error checking classification usage. Please try again later.');
+                showToast('Error', 'Error checking classification usage. Please try again later.', 'danger');
             });
+    }
+    
+    // Set up event listeners for delete confirmations
+    document.getElementById('confirmDeleteCode').addEventListener('click', function() {
+        const codeToDelete = document.getElementById('codeToDelete').value;
+        
+        // Send delete request
+        fetch(`/api/delete_code/${encodeURIComponent(codeToDelete)}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide the delete confirmation modal
+            deleteCodeModalObj.hide();
+            
+            if (data.success) {
+                // Show success message
+                showToast('Success', `Code "${codeToDelete}" has been deleted.`, 'success');
+                // Reload the codes list
+                loadCodesPage(1);
+            } else {
+                // Show error message
+                showToast('Error', data.message || 'Failed to delete code.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting code:', error);
+            deleteCodeModalObj.hide();
+            showToast('Error', 'Error deleting code. Please try again later.', 'danger');
+        });
+    });
+    
+    document.getElementById('confirmDeleteClassification').addEventListener('click', function() {
+        const classificationToDelete = document.getElementById('classificationToDelete').value;
+        
+        // Send delete request
+        fetch(`/api/delete_classification/${encodeURIComponent(classificationToDelete)}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide the delete confirmation modal
+            deleteClassificationModalObj.hide();
+            
+            if (data.success) {
+                // Show success message
+                showToast('Success', `Classification "${classificationToDelete}" has been deleted.`, 'success');
+                // Reload the classifications list
+                loadClassificationsPage(1);
+            } else {
+                // Show error message
+                showToast('Error', data.message || 'Failed to delete classification.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting classification:', error);
+            deleteClassificationModalObj.hide();
+            showToast('Error', 'Error deleting classification. Please try again later.', 'danger');
+        });
+    });
+    
+    // Helper function to show Bootstrap toasts
+    function showToast(title, message, type = 'primary') {
+        const toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            // Create toast container if it doesn't exist
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(container);
+        }
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-${type} text-white">
+                    <strong class="me-auto">${title}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('toast-container').insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
+        toast.show();
+        
+        // Remove the toast from DOM after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function () {
+            toastElement.remove();
+        });
     }
 });
 """
