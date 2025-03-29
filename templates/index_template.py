@@ -212,7 +212,14 @@ INDEX_TEMPLATE = """
             {% if transactions_by_month %}
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="mb-0">Showing all transactions organized by month</h6>
-                    <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print All</a>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="width: 200px;">
+                            <input type="number" class="form-control" id="yearFilter" placeholder="Filter by Year" min="2000" max="2100" value="">
+                            <button class="btn btn-outline-secondary" type="button" id="applyYearFilter">Filter</button>
+                            <button class="btn btn-outline-secondary" type="button" id="clearYearFilter">Clear</button>
+                        </div>
+                        <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print All</a>
+                    </div>
                 </div>
                 
                 <div class="accordion" id="transactionsByMonthAccordion">
@@ -284,7 +291,14 @@ INDEX_TEMPLATE = """
                 <!-- Fallback to flat list if not grouped by month -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="mb-0">Showing all transactions</h6>
-                    <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print All</a>
+                    <div class="d-flex">
+                        <div class="input-group me-2" style="width: 200px;">
+                            <input type="number" class="form-control" id="yearFilterFlat" placeholder="Filter by Year" min="2000" max="2100" value="">
+                            <button class="btn btn-outline-secondary" type="button" id="applyYearFilterFlat">Filter</button>
+                            <button class="btn btn-outline-secondary" type="button" id="clearYearFilterFlat">Clear</button>
+                        </div>
+                        <a href="{{ url_for('print_all_transactions') }}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-printer"></i> Print All</a>
+                    </div>
                 </div>
                 
                 <div class="table-responsive">
@@ -339,6 +353,126 @@ INDEX_TEMPLATE = """
         </div>
     </div>
 </div>
+
+<!-- Year Filter JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // For transactions organized by month
+        const yearFilter = document.getElementById('yearFilter');
+        const applyYearFilter = document.getElementById('applyYearFilter');
+        const clearYearFilter = document.getElementById('clearYearFilter');
+        const accordionItems = document.querySelectorAll('#transactionsByMonthAccordion .accordion-item');
+        
+        // Initial state - store original display settings
+        accordionItems.forEach(item => {
+            item._originalDisplay = item.style.display || '';
+        });
+        
+        // Apply filter function for transactions by month
+        function applyMonthFilter() {
+            const year = yearFilter.value.trim();
+            if (!year) {
+                clearMonthFilter();
+                return;
+            }
+            
+            accordionItems.forEach(item => {
+                const monthHeader = item.querySelector('.accordion-button .fw-bold');
+                if (monthHeader) {
+                    const monthText = monthHeader.textContent;
+                    if (monthText.includes(year)) {
+                        item.style.display = item._originalDisplay;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Clear filter function for transactions by month
+        function clearMonthFilter() {
+            accordionItems.forEach(item => {
+                item.style.display = item._originalDisplay;
+            });
+            yearFilter.value = '';
+        }
+        
+        // Attach event listeners for transactions by month
+        if (applyYearFilter) {
+            applyYearFilter.addEventListener('click', applyMonthFilter);
+        }
+        
+        if (clearYearFilter) {
+            clearYearFilter.addEventListener('click', clearMonthFilter);
+        }
+        
+        if (yearFilter) {
+            yearFilter.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    applyMonthFilter();
+                }
+            });
+        }
+        
+        // For flat list of transactions
+        const yearFilterFlat = document.getElementById('yearFilterFlat');
+        const applyYearFilterFlat = document.getElementById('applyYearFilterFlat');
+        const clearYearFilterFlat = document.getElementById('clearYearFilterFlat');
+        const flatTableRows = document.querySelectorAll('#allTransactionsTable tbody tr');
+        
+        // Initial state - store original display settings for flat table
+        flatTableRows.forEach(row => {
+            row._originalDisplay = row.style.display || '';
+        });
+        
+        // Apply filter function for flat transactions table
+        function applyFlatFilter() {
+            const year = yearFilterFlat.value.trim();
+            if (!year) {
+                clearFlatFilter();
+                return;
+            }
+            
+            flatTableRows.forEach(row => {
+                const dateCell = row.querySelector('td:first-child');
+                if (dateCell) {
+                    const dateText = dateCell.textContent.trim();
+                    // Date format is typically YYYY-MM-DD
+                    if (dateText.startsWith(year)) {
+                        row.style.display = row._originalDisplay;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Clear filter function for flat transactions table
+        function clearFlatFilter() {
+            flatTableRows.forEach(row => {
+                row.style.display = row._originalDisplay;
+            });
+            yearFilterFlat.value = '';
+        }
+        
+        // Attach event listeners for flat transactions list
+        if (applyYearFilterFlat) {
+            applyYearFilterFlat.addEventListener('click', applyFlatFilter);
+        }
+        
+        if (clearYearFilterFlat) {
+            clearYearFilterFlat.addEventListener('click', clearFlatFilter);
+        }
+        
+        if (yearFilterFlat) {
+            yearFilterFlat.addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    applyFlatFilter();
+                }
+            });
+        }
+    });
+</script>
 
 {% if selected_month %}
 <!-- Monthly Transactions (Displayed Only if Month Selected) -->
