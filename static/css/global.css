@@ -9,15 +9,15 @@ body { padding-bottom: 40px; background-color: #f8f9fa; }
 .modal-body .form-label { margin-bottom: 0.3rem; }
 .flash-message { margin-top: 15px; }
 
-/* Fix for modal z-index issues */
-.modal {
-    z-index: 1050 !important;
-}
+/* Attempt to force modal layering */
 .modal-backdrop {
-    z-index: 1040 !important;
+    /* Override Bootstrap defaults that seem to cause issues */
+    z-index: auto !important; 
+    background-color: transparent !important; 
 }
+
 .modal-dialog {
-    z-index: 1060 !important;
+    z-index: 1060 !important; /* Ensure dialog is above backdrop */
 }
 
 /* Footer should stay below modals */

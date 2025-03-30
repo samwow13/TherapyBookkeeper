@@ -59,7 +59,7 @@ BASE_TEMPLATE = """
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Modal Templates (moved after footer to ensure proper stacking) -->
+    <!-- Modal Templates -->
     {{ modals_content|safe }}
 
     <!-- Footer with decreased importance in the stacking context -->
@@ -73,93 +73,38 @@ BASE_TEMPLATE = """
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Modal Scripts -->
+    <!-- Modal Scripts (Temporarily Disabled for Debugging) -->
     <script>
-        {{ add_transaction_script|safe }}
+        // {{ add_transaction_script|safe }}
     </script>
     <script>
-        {{ edit_transaction_script|safe }}
+        // {{ edit_transaction_script|safe }}
     </script>
     <script>
-        {{ delete_transaction_script|safe }}
+        // {{ delete_transaction_script|safe }}
     </script>
     <script>
-        {{ print_modals_script|safe }}
+        // {{ print_modals_script|safe }}
     </script>
     <script>
-        {{ edit_codes_script|safe }}
+        // {{ edit_codes_script|safe }}
     </script>
 
-    <!-- Global Script -->
+    <!-- Minimal Modal Cleanup Script (Temporarily Disabled for Debugging) -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Fix for any modal issues
-            const fixModals = function() {
-                // Remove any stale backdrops
-                document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
-                    backdrop.remove();
-                });
-                
-                // Reset body classes
-                document.body.classList.remove('modal-open');
-                document.body.style.removeProperty('overflow');
-                document.body.style.removeProperty('padding-right');
-                
-                // Make sure all modals have proper event handling
-                document.querySelectorAll('.modal').forEach(function(modalEl) {
-                    // Ensure modal is properly initialized with Bootstrap
-                    if (!bootstrap.Modal.getInstance(modalEl)) {
-                        new bootstrap.Modal(modalEl);
-                    }
-                    
-                    modalEl.addEventListener('hidden.bs.modal', function() {
-                        // Clean up after modal is closed
-                        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
-                            backdrop.remove();
-                        });
-                        document.body.classList.remove('modal-open');
-                        document.body.style.removeProperty('overflow');
-                        document.body.style.removeProperty('padding-right');
-                    });
-                });
-                
-                // Fix any buttons that trigger modals
-                document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function(button) {
-                    button.addEventListener('click', function(e) {
-                        e.preventDefault(); // Prevent default action
-                        
-                        // Get the target modal ID
-                        const targetModalId = this.getAttribute('data-bs-target');
-                        if (!targetModalId) return;
-                        
-                        // Find the modal element
-                        const modalEl = document.querySelector(targetModalId);
-                        if (!modalEl) return;
-                        
-                        // Remove any existing backdrop
-                        document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
-                            backdrop.remove();
-                        });
-                        
-                        // Ensure modal is properly initialized with Bootstrap
-                        const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                        
-                        // Show the modal
-                        modalInstance.show();
-                    });
-                });
-            };
-            
-            // Run the fix immediately and after a short delay (for dynamic content)
-            fixModals();
-            setTimeout(fixModals, 500);
-            
-            // Initialize tooltips and popovers if any
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        });
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     document.body.addEventListener('hidden.bs.modal', function (event) {
+        //         if (!document.querySelector('.modal.show')) {
+        //             document.body.classList.remove('modal-open');
+        //             const backdrops = document.querySelectorAll('.modal-backdrop');
+        //             backdrops.forEach(backdrop => {
+        //                 backdrop.remove();
+        //             });
+        //             document.body.style.overflow = '';
+        //             document.body.style.paddingRight = '';
+        //         }
+        //     }, true);
+        // });
     </script>
     
     <!-- Page-specific JavaScript -->

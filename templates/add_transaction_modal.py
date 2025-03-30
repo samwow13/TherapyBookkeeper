@@ -63,56 +63,100 @@ ADD_TRANSACTION_MODAL = """
 # JavaScript functions related to the Add Transaction modal
 ADD_TRANSACTION_SCRIPT = """
 document.addEventListener('DOMContentLoaded', function() {
-    // Set date when modal is shown
-    const addTransactionModal = document.getElementById('addTransactionModal');
-    if (addTransactionModal) {
-        addTransactionModal.addEventListener('show.bs.modal', function() {
-            const dateField = document.getElementById('date');
+    const addTransactionModalEl = document.getElementById('addTransactionModal');
+    const addTransactionForm = document.getElementById('addTransactionForm');
+    const codeSelect = document.getElementById('code');
+    const amountField = document.getElementById('amount');
+    const dateField = document.getElementById('date');
+
+    function logBackdropState(eventName) {
+        const backdrop = document.querySelector('.modal-backdrop');
+        console.log(`--- ${eventName} ---`);
+        console.log('Modal classes:', addTransactionModalEl ? addTransactionModalEl.classList.toString() : 'Modal element not found');
+        if (backdrop) {
+            console.log('Backdrop found. Classes:', backdrop.classList.toString());
+            console.log('Backdrop style:', backdrop.style.cssText); // Log inline styles if any
+        } else {
+            console.log('Backdrop NOT found.');
+        }
+        console.log('--------------------');
+    }
+
+    if (addTransactionModalEl) {
+        addTransactionModalEl.addEventListener('show.bs.modal', function(event) {
+            console.log('Event: show.bs.modal triggered');
+            logBackdropState('Before Modal Show');
+            // Set date field value
             if (dateField) {
                 const lastDate = localStorage.getItem('lastTransactionDate');
                 dateField.value = lastDate || new Date().toISOString().split('T')[0];
+                console.log('Set date field to:', dateField.value);
             }
-            
-            // Auto-fill amount field based on default selected code when modal opens
-            const codeSelect = document.getElementById('code');
-            const amountField = document.getElementById('amount');
-            
+
+            // Auto-fill amount field based on default selected code
             if (codeSelect && amountField && codeSelect.value) {
-                // Extract the numeric part of the code
                 const numericCode = codeSelect.value.replace(/\D/g, '');
                 if (numericCode) {
                     amountField.value = numericCode;
+                    console.log('Prefilled amount based on code:', numericCode);
                 }
             }
         });
+
+        addTransactionModalEl.addEventListener('shown.bs.modal', function(event) {
+            console.log('Event: shown.bs.modal triggered');
+            logBackdropState('After Modal Shown');
+        });
+
+        addTransactionModalEl.addEventListener('hide.bs.modal', function(event) {
+            console.log('Event: hide.bs.modal triggered');
+            logBackdropState('Before Modal Hide');
+        });
+
+        addTransactionModalEl.addEventListener('hidden.bs.modal', function(event) {
+            console.log('Event: hidden.bs.modal triggered');
+            // It's crucial to check the backdrop *slightly after* hidden, as Bootstrap might remove it asynchronously
+            setTimeout(() => {
+                logBackdropState('After Modal Hidden (async check)');
+            }, 100); // Check after 100ms
+        });
+    } else {
+        console.error('Add Transaction Modal element not found!');
     }
-    
+
     // Save date when form is submitted
-    const addTransactionForm = document.getElementById('addTransactionForm');
     if (addTransactionForm) {
         addTransactionForm.addEventListener('submit', function() {
-            const dateValue = document.getElementById('date').value;
-            if (dateValue) {
-                localStorage.setItem('lastTransactionDate', dateValue);
+            if (dateField && dateField.value) {
+                localStorage.setItem('lastTransactionDate', dateField.value);
+                console.log('Saved last transaction date:', dateField.value);
+            } else {
+                 console.log('Could not save date on submit - field not found or empty');
             }
         });
+    } else {
+         console.error('Add Transaction Form element not found!');
     }
-    
+
     // Auto-fill amount field when code is selected
-    const codeSelect = document.getElementById('code');
     if (codeSelect) {
         codeSelect.addEventListener('change', function() {
             const selectedCode = codeSelect.value;
-            const amountField = document.getElementById('amount');
-            
             if (selectedCode && amountField) {
-                // Extract the numeric part of the code
                 const numericCode = selectedCode.replace(/\D/g, '');
+                 console.log('Code changed. Selected:', selectedCode, 'Numeric:', numericCode);
                 if (numericCode) {
                     amountField.value = numericCode;
+                    console.log('Updated amount field to:', numericCode);
+                } else {
+                     console.log('No numeric value found in selected code.');
                 }
+            } else {
+                 console.log('Code changed, but amount field or selection is invalid.');
             }
         });
+    } else {
+        console.error('Code Select element not found!');
     }
 });
 """

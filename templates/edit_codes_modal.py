@@ -220,16 +220,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Restore hidden.bs.modal listener but let Bootstrap handle backdrop removal
         modal.addEventListener('hidden.bs.modal', function() {
-            // Remove modal-open class and any lingering backdrops
+            // Ensure body class is managed correctly if other modals are still open
+            // Let Bootstrap handle backdrop removal by default
             const openModals = document.querySelectorAll('.modal.show');
             if (openModals.length === 0) {
                 document.body.classList.remove('modal-open');
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                    backdrop.remove();
-                });
+                // Commented out: Let Bootstrap handle this
+                // document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                //     backdrop.remove();
+                // });
             } else {
                 // If there are still modals open, make sure body remains modal-open
+                // This might be necessary if closing a nested modal
                 document.body.classList.add('modal-open');
             }
         });
