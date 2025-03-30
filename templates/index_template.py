@@ -507,6 +507,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // --- Scroll Position Persistence ---
+    let scrollTimeout; // Variable to hold the timeout ID
+
+    // Function to restore scroll position
+    function restoreScrollPosition() {
+        const savedScrollPos = sessionStorage.getItem('scrollPos');
+        if (savedScrollPos !== null) {
+            // Use setTimeout to ensure scrolling happens after potential layout shifts
+            setTimeout(() => {
+                window.scrollTo(0, parseInt(savedScrollPos, 10));
+                console.log(`Scroll position restored to: ${savedScrollPos}`); // Optional logging
+            }, 100); // Increased delay slightly for potentially complex layouts
+        }
+    }
+
+    // Listen for scroll events to save position
+    window.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+            try {
+                sessionStorage.setItem('scrollPos', window.scrollY);
+                console.log(`Scroll position saved: ${window.scrollY}`); // Optional logging
+            } catch (e) {
+                console.error('Failed to save scroll position to sessionStorage:', e);
+            }
+        }, 250); // Debounce saving
+    });
+
+    // Restore scroll position when the window finishes loading all content
+    window.addEventListener('load', restoreScrollPosition);
+
+    // --- End Scroll Position Persistence ---
+
     function saveUIState(elementId, state) {
         console.log(`Saving state: ${elementId} = ${state}`); // Debug logging
         fetch('/save_ui_state', {
@@ -564,8 +597,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-
-
 });
 </script>
 
