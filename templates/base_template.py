@@ -23,11 +23,13 @@ BASE_TEMPLATE = """
         <div class="rainbow-band rainbow-band-1"></div> <div class="rainbow-band rainbow-band-2"></div> <div class="rainbow-band rainbow-band-3"></div>
         <div class="rainbow-band rainbow-band-4"></div> <div class="rainbow-band rainbow-band-5"></div> <div class="rainbow-band rainbow-band-6"></div>
         <div class="rainbow-band rainbow-band-7"></div>
+        <div class="rainbow-band rainbow-band-8"></div> <div class="rainbow-band rainbow-band-9"></div> <div class="rainbow-band rainbow-band-10"></div>
+        <div class="rainbow-band rainbow-band-11"></div> <div class="rainbow-band rainbow-band-12"></div> <div class="rainbow-band rainbow-band-13"></div>
+        <div class="rainbow-band rainbow-band-14"></div> <div class="rainbow-band rainbow-band-15"></div>
     </div>
     <div class="rainbow-container rainbow-right">
-         <div class="rainbow-band rainbow-band-1"></div> <div class="rainbow-band rainbow-band-2"></div> <div class="rainbow-band rainbow-band-3"></div>
-        <div class="rainbow-band rainbow-band-4"></div> <div class="rainbow-band rainbow-band-5"></div> <div class="rainbow-band rainbow-band-6"></div>
-        <div class="rainbow-band rainbow-band-7"></div>
+        <div class="rainbow-band rainbow-band-1"></div> <div class="rainbow-band rainbow-band-2"></div> <div class="rainbow-band rainbow-band-3"></div> <div class="rainbow-band rainbow-band-4"></div> <div class="rainbow-band rainbow-band-5"></div> <div class="rainbow-band rainbow-band-6"></div> <div class="rainbow-band rainbow-band-7"></div>
+        <div class="rainbow-band rainbow-band-8"></div> <div class="rainbow-band rainbow-band-9"></div> <div class="rainbow-band rainbow-band-10"></div> <div class="rainbow-band rainbow-band-11"></div> <div class="rainbow-band rainbow-band-12"></div> <div class="rainbow-band rainbow-band-13"></div> <div class="rainbow-band rainbow-band-14"></div> <div class="rainbow-band rainbow-band-15"></div>
     </div>
 
     <!-- Navigation Bar -->
