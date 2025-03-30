@@ -5,8 +5,11 @@ Features: Homepage listing transactions, modal for adding transactions,
           monthly and overall financial summaries.
 """
 import os
+import os # <-- Add this import
 from flask import Flask, request, redirect, url_for, g, flash, jsonify, session
 from datetime import datetime
+import webbrowser
+import threading
 
 # Import modules
 from database import DatabaseManager
@@ -67,7 +70,8 @@ def inject_modal_data():
         EDIT_TRANSACTION_SCRIPT_TEMPLATE,
         DELETE_TRANSACTION_SCRIPT_TEMPLATE,
         PRINT_MODALS_SCRIPT_TEMPLATE,
-        EDIT_CODES_SCRIPT_TEMPLATE
+        EDIT_CODES_SCRIPT_TEMPLATE,
+        SHUTDOWN_SCRIPT_TEMPLATE
     )
     
     # Default empty options
@@ -103,6 +107,7 @@ def inject_modal_data():
         'delete_transaction_script': DELETE_TRANSACTION_SCRIPT_TEMPLATE,
         'print_modals_script': PRINT_MODALS_SCRIPT_TEMPLATE,
         'edit_codes_script': EDIT_CODES_SCRIPT_TEMPLATE,
+        'shutdown_script_template': SHUTDOWN_SCRIPT_TEMPLATE,
         'classification_options': classification_options,
         'code_options': code_options,
     }
@@ -275,6 +280,47 @@ def save_ui_state():
     # print(f"Saved UI State: {session['ui_state']}") # Debugging
     return jsonify(success=True)
 
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    # Basic security: Only allow shutdown requests from localhost
+    print(f"DEBUG: Shutdown request received from {request.remote_addr}") # DEBUG
+    if request.remote_addr != '127.0.0.1':
+        # Maybe log this attempt or return a forbidden error
+        print(f"WARN: Shutdown attempt from non-local address: {request.remote_addr}") # DEBUG
+        return jsonify(success=False, message="Forbidden"), 403
+
+    print("DEBUG: Shutdown request is from localhost. Attempting to stop server...") # DEBUG
+    try:
+        # Try Werkzeug's shutdown function first
+        shutdown_func = request.environ.get('werkzeug.server.shutdown')
+        if shutdown_func:
+            print("DEBUG: Found Werkzeug shutdown function. Calling it...") # DEBUG
+            shutdown_func()
+            print("DEBUG: Werkzeug shutdown initiated.") # DEBUG
+            # Return success, even though the server might stop before sending
+            return jsonify(success=True, message="Server shutting down via Werkzeug.")
+        else:
+            # Fallback for non-Werkzeug environments (like packaged app)
+            print("WARN: Werkzeug shutdown function not found. Falling back to os._exit(0).") # DEBUG
+            # We need to send a response *before* exiting, but this is tricky.
+            # The best we can do is schedule the exit after a tiny delay, 
+            # hoping the response gets sent.
+            # A cleaner solution might involve a separate thread or process management.
+            def delayed_exit():
+                import time
+                time.sleep(0.1) # Short delay to allow response sending
+                os._exit(0) # Force exit
+            
+            import threading
+            threading.Thread(target=delayed_exit).start()
+            
+            return jsonify(success=True, message="Shutdown initiated via os._exit.")
+
+    except Exception as e:
+        print(f"ERROR: Exception during shutdown attempt: {e}") # DEBUG
+        # If even the attempt fails, return an error
+        return jsonify(success=False, message=f"Error during shutdown: {str(e)}"), 500
+
 # AJAX Endpoints
 @app.route('/api/check_code_usage/<path:code>')
 def check_code_usage(code):
@@ -324,7 +370,19 @@ if __name__ == '__main__':
 
     host = '127.0.0.1'
     port = 5000
-    print(f"Flask app ready. Running on http://{host}:{port}")
-    print("Access the app in your browser.")
-    # Set debug=False for a cleaner console, True for development error pages
-    app.run(host=host, port=port, debug=True)
+    url = f"http://{host}:{port}"
+
+    # Function to open the browser
+    def open_browser():
+        print(f"Attempting to open browser at {url}")
+        webbrowser.open_new(url)
+
+    print(f"Flask app ready. Running on {url}")
+    print("Will attempt to open the app in your default browser shortly...")
+    
+    # Run the browser opening in a separate thread after a delay
+    # This gives the server time to start up before trying to open the browser
+    threading.Timer(1.5, open_browser).start() 
+
+    # Set debug=False for production/distribution
+    app.run(host=host, port=port, debug=False)

@@ -75,42 +75,46 @@ BASE_TEMPLATE = """
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Modal Scripts (Temporarily Disabled for Debugging) -->
+    <!-- Modal Scripts -->
     <script>
-        // {{ add_transaction_script|safe }}
+        {{ add_transaction_script|safe }}
     </script>
     <script>
-        // {{ edit_transaction_script|safe }}
+        {{ edit_transaction_script|safe }}
     </script>
     <script>
-        // {{ delete_transaction_script|safe }}
+        {{ delete_transaction_script|safe }}
     </script>
     <script>
-        // {{ print_modals_script|safe }}
+        {{ print_modals_script|safe }}
     </script>
     <script>
-        // {{ edit_codes_script|safe }}
+        {{ edit_codes_script|safe }}
+    </script>
+    <script>
+        {{ shutdown_script_template|safe }}
     </script>
 
-    <!-- Minimal Modal Cleanup Script (Temporarily Disabled for Debugging) -->
+    <!-- Minimal Modal Cleanup Script -->
     <script>
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     document.body.addEventListener('hidden.bs.modal', function (event) {
-        //         if (!document.querySelector('.modal.show')) {
-        //             document.body.classList.remove('modal-open');
-        //             const backdrops = document.querySelectorAll('.modal-backdrop');
-        //             backdrops.forEach(backdrop => {
-        //                 backdrop.remove();
-        //             });
-        //             document.body.style.overflow = '';
-        //             document.body.style.paddingRight = '';
-        //         }
-        //     }, true);
-        // });
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.addEventListener('hidden.bs.modal', function (event) {
+                if (!document.querySelector('.modal.show')) {
+                    document.body.classList.remove('modal-open');
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    backdrops.forEach(backdrop => {
+                        backdrop.remove();
+                    });
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }
+            }, true);
+        });
     </script>
     
     <!-- Page-specific JavaScript -->
     {% block scripts %}{% endblock %}
+
 </body>
 </html>
 """

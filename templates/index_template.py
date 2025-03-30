@@ -51,6 +51,9 @@ INDEX_TEMPLATE = """
             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#editCodesModal">
                 <i class="bi bi-gear me-1"></i> Edit Codes and Classifications
             </button>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#shutdownConfirmModal">
+                <i class="bi bi-power me-1"></i> Shutdown Application
+            </button>
         </div>
     </div>
 </div>
