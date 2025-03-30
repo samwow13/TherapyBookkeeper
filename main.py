@@ -170,7 +170,7 @@ def delete_code(code):
     """Handles deleting a transaction code."""
     return code_manager.delete_code(code)
 
-@app.route('/api/delete_code/<code>', methods=['DELETE'])
+@app.route('/api/delete_code/<path:code>', methods=['DELETE'])
 def api_delete_code(code):
     """API endpoint for deleting a transaction code."""
     db = db_manager.get_db()
@@ -208,7 +208,7 @@ def delete_classification(classification):
     """Handles deleting a transaction classification."""
     return classification_manager.delete_classification(classification)
 
-@app.route('/api/delete_classification/<classification>', methods=['DELETE'])
+@app.route('/api/delete_classification/<path:classification>', methods=['DELETE'])
 def api_delete_classification(classification):
     """API endpoint for deleting a transaction classification."""
     db = db_manager.get_db()
@@ -242,12 +242,12 @@ def api_delete_classification(classification):
         })
 
 # AJAX Endpoints
-@app.route('/api/check_code_usage/<code>')
+@app.route('/api/check_code_usage/<path:code>')
 def check_code_usage(code):
     """Check if a code is in use by any transactions."""
     return code_manager.check_usage(code)
 
-@app.route('/api/check_classification_usage/<classification>')
+@app.route('/api/check_classification_usage/<path:classification>')
 def check_classification_usage(classification):
     """Check if a classification is in use by any transactions."""
     return classification_manager.check_usage(classification)

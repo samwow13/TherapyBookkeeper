@@ -280,6 +280,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     deleteBtn.addEventListener('click', function() {
                         checkCodeUsage(code);
                     });
+
+                    // Disable delete button for code '125' and add tooltip
+                    if (code === '125') {
+                        deleteBtn.disabled = true;
+                        deleteBtn.setAttribute('title', 'This code is required and cannot be deleted.');
+                        new bootstrap.Tooltip(deleteBtn); // Initialize Bootstrap tooltip for the disabled button
+                    }
+                    
                     codeItem.appendChild(deleteBtn);
                     
                     codesList.appendChild(codeItem);
@@ -378,6 +386,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     deleteBtn.addEventListener('click', function() {
                         checkClassificationUsage(classification);
                     });
+
+                    // Disable delete button for 'Client Income' and add tooltip
+                    if (classification === 'Client Income') {
+                        deleteBtn.disabled = true;
+                        deleteBtn.setAttribute('title', 'This classification is required and cannot be deleted.');
+                        new bootstrap.Tooltip(deleteBtn); // Initialize Bootstrap tooltip
+                    }
+                    
                     classificationItem.appendChild(deleteBtn);
                     
                     classificationsList.appendChild(classificationItem);
