@@ -70,7 +70,7 @@ body { padding-bottom: 40px; background-color: #f8f9fa; }
 .rainbow-container { position: fixed; top: 0; bottom: 0; width: 150px; /* Wider */ z-index: 0; overflow: hidden; pointer-events: none; }
 .rainbow-left { left: 0; }
 .rainbow-right { right: 0; }
-.rainbow-band { position: absolute; height: 100%; width: 10px; /* Narrower */ opacity: 0.4; /* Subtler */ animation-duration: 15s; animation-timing-function: linear; animation-iteration-count: infinite; }
+.rainbow-band { position: absolute; height: 100%; width: 10px; /* Narrower */ opacity: 0.4; /* Subtler */ animation-duration: 31s; /* Adjusted duration */ animation-timing-function: linear; animation-iteration-count: infinite; }
 .rainbow-left .rainbow-band { animation-name: slideHorizontalLeft; }
 .rainbow-right .rainbow-band { animation-name: slideHorizontalRight; }
 
@@ -93,12 +93,12 @@ body { padding-bottom: 40px; background-color: #f8f9fa; }
 
 /* Rainbow animation keyframes */
 @keyframes slideHorizontalLeft {
-    0% { transform: translateX(-100%); } /* Start off-screen left */
-    100% { transform: translateX(1500%); } /* Move 3x further */
+    0% { transform: translateX(-10px); } /* Start off-screen left */
+    100% { transform: translateX(160px); } /* Move across container + band width (pixel value) */
 }
 @keyframes slideHorizontalRight {
-    0% { transform: translateX(100%); } /* Start off-screen right */
-    100% { transform: translateX(-1500%); } /* Move 3x further */
+    0% { transform: translateX(150px); } /* Start band at the right edge of the container */
+    100% { transform: translateX(-20px); } /* End band past the left edge, matching left distance */
 }
 
 /* Custom styling for the application */
