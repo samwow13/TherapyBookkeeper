@@ -70,27 +70,35 @@ class CodeManager:
     
     def add_code(self):
         """
-        Handles adding a new transaction code.
-        
+        Handles adding a new transaction code via AJAX.
+
         Returns:
-            Redirect to the index page with a flash message
+            JSON response indicating success or failure.
         """
         code = request.form.get('code', '').strip()
         if not code:
-            flash('Code cannot be empty.', 'danger')
-            return redirect(url_for('index'))
-        
+            # Return JSON error
+            return jsonify(success=False, message='Code cannot be empty.')
+
         db = self.db_manager.get_db()
         cursor = db.cursor()
-        
+
         try:
+            # Check if code already exists
+            cursor.execute("SELECT 1 FROM codes WHERE code = ?", (code,))
+            if cursor.fetchone():
+                return jsonify(success=False, message=f'Code \"{code}\" already exists.')
+
             cursor.execute("INSERT INTO codes (code) VALUES (?)", (code,))
             db.commit()
-            flash(f'Code "{code}" added successfully!', 'success')
+            # Return JSON success
+            return jsonify(success=True, message=f'Code \"{code}\" added successfully!')
         except Exception as e:
-            flash(f'Error adding code: {e}', 'danger')
-        
-        return redirect(url_for('index'))
+            # Log the error for debugging
+            print(f"Database error adding code: {e}") # Consider proper logging
+            db.rollback() # Rollback changes on error
+            # Return JSON error
+            return jsonify(success=False, message=f'Error adding code. Please try again later.')
     
     def delete_code(self, code):
         """

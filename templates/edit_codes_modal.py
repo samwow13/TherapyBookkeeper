@@ -62,7 +62,7 @@ EDIT_CODES_MODAL = """
                             <div class="col-md-6">
                                 <form action="/add_classification" method="post" id="addClassificationForm" class="mb-4">
                                     <div class="d-flex">
-                                        <input type="text" class="form-control me-2" id="classification" name="classification" placeholder="New Classification" required>
+                                        <input type="text" class="form-control me-2" id="newClassificationInput" name="newClassificationInput" placeholder="New Classification" required autocomplete="off">
                                         <button type="submit" class="btn btn-primary">Add Classification</button>
                                     </div>
                                 </form>
@@ -205,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const addCodeForm = document.getElementById('addCodeForm');
     const addClassificationForm = document.getElementById('addClassificationForm');
     const codeInput = document.getElementById('code');
-    const classificationInput = document.getElementById('classification');
 
     // Handle initial data loading
     editCodesModal.addEventListener('show.bs.modal', function() {
@@ -607,18 +606,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle Add Classification form submission
     addClassificationForm.addEventListener('submit', function(event) {
         event.preventDefault(); // Prevent default form submission
+
+        // Get the input element *inside* the listener using the NEW ID
+        const classificationInput = document.getElementById('newClassificationInput');
+
         const newClassification = classificationInput.value.trim();
+
         if (!newClassification) {
             showToast('Error', 'Classification cannot be empty.', 'danger');
             return;
         }
 
+        // Ensure the body sends the correct parameter name expected by Flask
         fetch('/add_classification', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: `classification=${encodeURIComponent(newClassification)}`
+            body: `classification=${encodeURIComponent(newClassification)}` // Keep 'classification' here as Flask expects it
         })
         .then(response => response.json())
         .then(data => {
