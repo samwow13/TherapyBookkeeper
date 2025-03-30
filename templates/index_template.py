@@ -507,6 +507,45 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // === Year Filter Persistence ===
+    const yearFilterInput = document.getElementById('yearFilter');
+    const applyYearFilterButton = document.getElementById('applyYearFilter');
+    const clearYearFilterButton = document.getElementById('clearYearFilter');
+    const yearFilterStorageKey = 'yearFilterValue';
+
+    // 1. Restore value on page load
+    const savedYear = localStorage.getItem(yearFilterStorageKey);
+    if (savedYear && yearFilterInput) {
+        yearFilterInput.value = savedYear;
+        // Optional: Trigger the filter logic if needed after restoring
+        // applyYearFilterButton.click(); // Uncomment if filter should apply automatically on load
+    }
+
+    // 2. Save value when Apply button is clicked
+    if (applyYearFilterButton && yearFilterInput) {
+        applyYearFilterButton.addEventListener('click', function() {
+            const yearValue = yearFilterInput.value;
+            if (yearValue) {
+                localStorage.setItem(yearFilterStorageKey, yearValue);
+            } else {
+                // If the input is cleared manually and then applied, remove the stored value
+                localStorage.removeItem(yearFilterStorageKey);
+            }
+            // Note: The actual filtering logic (page reload or AJAX) should still proceed as before.
+            // This script only handles saving the value.
+        });
+    }
+
+    // 3. Clear value when Clear button is clicked
+    if (clearYearFilterButton && yearFilterInput) {
+        clearYearFilterButton.addEventListener('click', function() {
+            localStorage.removeItem(yearFilterStorageKey);
+            yearFilterInput.value = ''; // Ensure the input field is cleared visually
+            // Note: The actual filter clearing logic should still proceed as before.
+        });
+    }
+    // === End Year Filter Persistence ===
+
     // --- Scroll Position Persistence ---
     let scrollTimeout; // Variable to hold the timeout ID
 

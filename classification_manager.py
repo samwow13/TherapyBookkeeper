@@ -78,12 +78,12 @@ class ClassificationManager:
         """
         # --- DEBUGGING: Read raw data instead of request.form ---
         raw_data = request.get_data(as_text=True)
-        print(f"DEBUG: Raw request body: {raw_data!r}")
+        #print(f"DEBUG: Raw request body: {raw_data!r}")
         parsed_data = parse_qs(raw_data)
-        print(f"DEBUG: Parsed request body: {parsed_data}")
+        #print(f"DEBUG: Parsed request body: {parsed_data}")
         classification_values = parsed_data.get('classification', [])
         classification = classification_values[0].strip() if classification_values else ''
-        print(f"DEBUG: Manually parsed classification: {classification!r}")
+        #print(f"DEBUG: Manually parsed classification: {classification!r}")
         # --- END DEBUGGING ---
 
         if not classification:
@@ -94,7 +94,7 @@ class ClassificationManager:
         cursor = db.cursor()
 
         # --- DEBUGGING START ---
-        print(f"DEBUG: Received classification from form: {classification!r}")
+        #print(f"DEBUG: Received classification from form: {classification!r}")
         # --- DEBUGGING END ---
 
         try:
@@ -102,7 +102,7 @@ class ClassificationManager:
             cursor.execute("SELECT 1 FROM classifications WHERE classification = ?", (classification,))
             # --- DEBUGGING START ---
             exists_result = cursor.fetchone()
-            print(f"DEBUG: Result of SELECT check (exists?): {exists_result}")
+            #print(f"DEBUG: Result of SELECT check (exists?): {exists_result}")
             # --- DEBUGGING END ---
             if exists_result:
                 return jsonify(success=False, message=f'Classification \"{classification}\" already exists.')
@@ -113,7 +113,7 @@ class ClassificationManager:
             return jsonify(success=True, message=f'Classification \"{classification}\" added successfully!')
         except Exception as e:
             # Log the error for debugging
-            print(f"Database error adding classification: {e}") # Consider proper logging
+            #print(f"Database error adding classification: {e}") # Consider proper logging
             db.rollback() # Rollback changes on error
             # Return JSON error
             return jsonify(success=False, message=f'Error adding classification. Please try again later.')

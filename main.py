@@ -39,15 +39,15 @@ def inject_date_context():
     recent_date = None
     try:
         recent_date = transaction_manager.get_most_recent_transaction_date()
-        print(f"DEBUG - Most recent transaction date: {recent_date}")
+        #print(f"DEBUG - Most recent transaction date: {recent_date}")
     except Exception as e:
         # If any error occurs, default to today's date
         app.logger.error(f"Error getting recent transaction date: {e}")
-        print(f"DEBUG - Error getting recent date: {e}")
+       # print(f"DEBUG - Error getting recent date: {e}")
     
     # Use recent_date if available, otherwise use today
     suggested_date = recent_date if recent_date else today
-    print(f"DEBUG - Using date for form: {suggested_date}")
+    #print(f"DEBUG - Using date for form: {suggested_date}")
     
     return {
         'now': datetime.now(),  # Keep the original now variable
