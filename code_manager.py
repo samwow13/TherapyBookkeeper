@@ -75,7 +75,7 @@ class CodeManager:
         Returns:
             JSON response indicating success or failure.
         """
-        code = request.form.get('code', '').strip()
+        code = request.form.get('newCodeInput', '').strip()
         if not code:
             # Return JSON error
             return jsonify(success=False, message='Code cannot be empty.')

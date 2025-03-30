@@ -34,9 +34,10 @@ EDIT_CODES_MODAL = """
                     <div class="tab-pane fade show active" id="codes-content" role="tabpanel" aria-labelledby="codes-tab">
                         <div class="row mt-3">
                             <div class="col-md-6">
+                                <div id="addCodeMessagePlaceholder"></div> <!-- Placeholder for messages -->
                                 <form action="/add_code" method="post" id="addCodeForm" class="mb-4">
                                     <div class="d-flex">
-                                        <input type="text" class="form-control me-2" id="code" name="code" placeholder="New Code" required>
+                                        <input type="text" class="form-control me-2" id="newCodeInput" name="newCodeInput" placeholder="New Code" required>
                                         <button type="submit" class="btn btn-primary">Add Code</button>
                                     </div>
                                 </form>
@@ -204,7 +205,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get form elements
     const addCodeForm = document.getElementById('addCodeForm');
     const addClassificationForm = document.getElementById('addClassificationForm');
-    const codeInput = document.getElementById('code');
+    const codeInput = document.getElementById('newCodeInput');
+    const addCodeMessagePlaceholder = document.getElementById('addCodeMessagePlaceholder'); // Get placeholder
 
     // Handle initial data loading
     editCodesModal.addEventListener('show.bs.modal', function() {
@@ -585,39 +587,41 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Handle Add Code form submission
-    addCodeForm.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
-        const newCode = codeInput.value.trim();
-        if (!newCode) {
-            showToast('Error', 'Code cannot be empty.', 'danger');
-            return;
-        }
+    // AJAX Handler for Add Code form
+    if (addCodeForm) {
+        addCodeForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            
+            const formData = new FormData(addCodeForm);
+            const codeValue = formData.get('newCodeInput').trim();
+            addCodeMessagePlaceholder.innerHTML = ''; // Clear previous messages
 
-        fetch('/add_code', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `code=${encodeURIComponent(newCode)}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('Success', `Code "${newCode}" added successfully.`, 'success');
-                codeInput.value = ''; // Clear the input
-                loadCodesPage(1); // Reload the codes list in the modal
-                // Decide if a full page reload is needed for codes
-                // location.reload(); // Uncomment if needed
-            } else {
-                showToast('Error', data.message || 'Failed to add code.', 'danger');
+            if (!codeValue) {
+                // Display error message using Bootstrap alert
+                addCodeMessagePlaceholder.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">Code cannot be empty.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                return; // Stop if input is empty
             }
-        })
-        .catch(error => {
-            console.error('Error adding code:', error);
-            showToast('Error', 'Error adding code. Please try again later.', 'danger');
+
+            fetch('/add_code', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let alertClass = data.success ? 'alert-success' : 'alert-danger';
+                addCodeMessagePlaceholder.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">${data.message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+                
+                if (data.success) {
+                    addCodeForm.reset(); // Clear the form input
+                    loadCodesPage(1); // Reload the codes list
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+                addCodeMessagePlaceholder.innerHTML = '<div class="alert alert-danger alert-dismissible fade show" role="alert">An error occurred while adding the code. Please try again.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+            });
         });
-    });
+    }
 
     // Handle Add Classification form submission
     addClassificationForm.addEventListener('submit', function(event) {
