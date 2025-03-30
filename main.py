@@ -5,7 +5,7 @@ Features: Homepage listing transactions, modal for adding transactions,
           monthly and overall financial summaries.
 """
 import os
-from flask import Flask, request, redirect, url_for, g, flash, jsonify
+from flask import Flask, request, redirect, url_for, g, flash, jsonify, session
 from datetime import datetime
 
 # Import modules
@@ -19,6 +19,7 @@ from config import DATABASE
 # --- Flask App Setup ---
 app = Flask(__name__, static_folder='static')
 app.secret_key = os.urandom(24)  # Needed for flashing messages
+app.config.from_pyfile('config.py') # Load config directly from config.py file
 
 # Initialize managers
 db_manager = DatabaseManager(app, DATABASE)
@@ -111,7 +112,11 @@ def inject_modal_data():
 @app.route('/month/<month>')
 def index(month=None):
     """Homepage: Displays transactions and financial summary."""
-    return transaction_manager.index_view(month)
+    # Ensure ui_state exists in session
+    if 'ui_state' not in session:
+        session['ui_state'] = {}
+    
+    return transaction_manager.index_view(month, ui_state=session.get('ui_state', {}))
 
 @app.route('/print/month/<month>')
 def print_transactions(month):
@@ -243,6 +248,32 @@ def api_delete_classification(classification):
             'success': False,
             'message': f'Error deleting classification: {str(e)}'
         })
+
+@app.route('/save_ui_state', methods=['POST'])
+def save_ui_state():
+    """Save the expanded/collapsed state of UI elements to the session."""
+    data = request.get_json()
+    if not data or 'id' not in data or 'state' not in data:
+        return jsonify(success=False, error="Invalid data"), 400
+
+    element_id = data['id']
+    state = data['state']
+
+    # Basic validation (optional: add more specific checks if needed)
+    allowed_prefixes = ('allTransactionsCollapse', 'monthCollapse-')
+    if not element_id or not any(element_id.startswith(p) for p in allowed_prefixes):
+         return jsonify(success=False, error="Invalid element ID"), 400
+    if state not in ('show', 'hide'):
+         return jsonify(success=False, error="Invalid state"), 400
+
+    if 'ui_state' not in session:
+        session['ui_state'] = {}
+
+    session['ui_state'][element_id] = state
+    session.modified = True  # Mark session as modified
+
+    # print(f"Saved UI State: {session['ui_state']}") # Debugging
+    return jsonify(success=True)
 
 # AJAX Endpoints
 @app.route('/api/check_code_usage/<path:code>')

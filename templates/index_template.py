@@ -201,12 +201,12 @@ INDEX_TEMPLATE = """
 <!-- All Transactions Section (Always Displayed) -->
 <div class="card mb-4">
     <div class="card-header bg-light" id="allTransactionsHeader">
-        <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#allTransactionsCollapse" aria-expanded="false" aria-controls="allTransactionsCollapse">
+        <button id="allTransactionsButton" class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none {% if ui_state.get('allTransactionsCollapse') != 'show' %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#allTransactionsCollapse" aria-expanded="{{ 'true' if ui_state.get('allTransactionsCollapse') == 'show' else 'false' }}" aria-controls="allTransactionsCollapse">
             <h5 class="mb-0 ms-3">All Transactions</h5>
             <i class="bi bi-chevron-down me-3"></i>
         </button>
     </div>
-    <div id="allTransactionsCollapse" class="collapse" aria-labelledby="allTransactionsHeader">
+    <div id="allTransactionsCollapse" class="collapse {% if ui_state.get('allTransactionsCollapse') == 'show' %}show{% endif %}" aria-labelledby="allTransactionsHeader">
         <div class="card-body">
             <!-- All Transactions Organized by Month -->
             {% if transactions_by_month %}
@@ -226,15 +226,15 @@ INDEX_TEMPLATE = """
                 <div class="accordion" id="transactionsByMonthAccordion">
                     {% for month_key, month_data in transactions_by_month.items() %}
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="monthHeading{{ loop.index }}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#monthCollapse{{ loop.index }}" aria-expanded="false" aria-controls="monthCollapse{{ loop.index }}">
+                        <h2 class="accordion-header" id="monthHeading-{{ month_key }}"> 
+                            <button id="monthButton-{{ month_key }}" class="accordion-button {% if ui_state.get('monthCollapse-' + month_key) != 'show' %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#monthCollapse-{{ month_key }}" aria-expanded="{{ 'true' if ui_state.get('monthCollapse-' + month_key) == 'show' else 'false' }}" aria-controls="monthCollapse-{{ month_key }}"> 
                                 <div class="d-flex justify-content-between align-items-center w-100">
                                     <div class="fw-bold fs-5">{{ month_data.month_name }}</div>
                                     <div class="badge bg-primary rounded-pill">{{ month_data.transactions|length }} transactions</div>
                                 </div>
                             </button>
                         </h2>
-                        <div id="monthCollapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="monthHeading{{ loop.index }}" data-bs-parent="#transactionsByMonthAccordion">
+                        <div id="monthCollapse-{{ month_key }}" class="accordion-collapse collapse {% if ui_state.get('monthCollapse-' + month_key) == 'show' %}show{% endif %}" aria-labelledby="monthHeading-{{ month_key }}" data-bs-parent="#transactionsByMonthAccordion"> 
                             <div class="accordion-body p-0">
                                 <!-- Transactions Table for This Month -->
                                 <div class="table-responsive">
@@ -484,8 +484,93 @@ INDEX_TEMPLATE = """
     });
 </script>
 
+{# Add this script block for saving collapse state #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Target the main collapse and all monthly collapses within the "All Transactions" section
+    const collapseElements = document.querySelectorAll('#allTransactionsCollapse, [id^="monthCollapse-"]');
+
+    collapseElements.forEach(element => {
+        // Listen for Bootstrap collapse events
+        element.addEventListener('shown.bs.collapse', handleCollapseToggle);
+        element.addEventListener('hidden.bs.collapse', handleCollapseToggle);
+    });
+
+    function handleCollapseToggle(event) {
+        const elementId = event.target.id;
+        // Determine state based on the event type
+        const state = event.type === 'shown.bs.collapse' ? 'show' : 'hide';
+
+        // Ensure we are only saving state for the intended elements
+        if (elementId === 'allTransactionsCollapse' || elementId.startsWith('monthCollapse-')) {
+            saveUIState(elementId, state);
+        }
+    }
+
+    function saveUIState(elementId, state) {
+        console.log(`Saving state: ${elementId} = ${state}`); // Debug logging
+        fetch('/save_ui_state', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // IMPORTANT: Add CSRF token header if your Flask app uses CSRF protection
+                // Example for Flask-WTF: 'X-CSRFToken': '{{ '{{ csrf_token() }}' }}'
+            },
+            body: JSON.stringify({ id: elementId, state: state })
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error('Failed to save UI state. Status:', response.statusText);
+                // Optionally, inform the user
+            } else {
+                 console.log('UI state saved successfully.'); // Confirmation logging
+            }
+        })
+        .catch(error => {
+            console.error('Error sending UI state:', error);
+            // Optionally, inform the user about the network error
+        });
+    }
+
+    // Initial check - Apply state from sessionStorage for faster perceived load (optional but recommended)
+    // This complements the server-side rendering based on Flask session
+    collapseElements.forEach(element => {
+        const savedState = sessionStorage.getItem(element.id);
+        if (savedState === 'show') {
+            // Use Bootstrap's JS API to show without triggering the event/AJAX call again
+            const bsCollapse = bootstrap.Collapse.getInstance(element) || new bootstrap.Collapse(element, { toggle: false });
+            bsCollapse.show();
+        } else if (savedState === 'hide') {
+             const bsCollapse = bootstrap.Collapse.getInstance(element) || new bootstrap.Collapse(element, { toggle: false });
+             bsCollapse.hide();
+        }
+        // If no state in sessionStorage, rely on server-rendered state
+    });
+
+     // Also save to sessionStorage when toggling
+     function handleCollapseToggle(event) { // Redefine to include sessionStorage
+        const elementId = event.target.id;
+        const state = event.type === 'shown.bs.collapse' ? 'show' : 'hide';
+
+        if (elementId === 'allTransactionsCollapse' || elementId.startsWith('monthCollapse-')) {
+            // Save to server via AJAX
+            saveUIState(elementId, state);
+            // Save to browser's sessionStorage
+            try {
+                sessionStorage.setItem(elementId, state);
+                console.log(`State saved to sessionStorage: ${elementId} = ${state}`);
+            } catch (e) {
+                console.error('Failed to save state to sessionStorage:', e);
+            }
+        }
+    }
+
+
+});
+</script>
+
+
 {% if selected_month %}
-<!-- Monthly Transactions (Displayed Only if Month Selected) -->
 <div class="monthly-transactions mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>Transactions for {{ monthly_totals | selectattr('month_key', 'equalto', selected_month) | map(attribute='month') | first }}</h3>

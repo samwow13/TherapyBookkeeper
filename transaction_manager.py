@@ -538,12 +538,13 @@ class TransactionManager:
             print(f"Error updating transaction: {e}")
             return False
             
-    def index_view(self, month=None):
+    def index_view(self, month=None, ui_state=None):
         """
         Render the index view with transactions and financial summary.
         
         Args:
             month: Optional month filter in format 'YYYY-MM'
+            ui_state: Optional UI state dictionary
             
         Returns:
             Rendered HTML for the index page
@@ -642,7 +643,8 @@ class TransactionManager:
             selected_month=month,
             transactions_by_month=transactions_by_month,
             all_transactions=all_transactions,
-            monthly_transactions=transactions if month else None
+            monthly_transactions=transactions if month else None,
+            ui_state=ui_state or {}
         )
         
     def print_month_view(self, month):
