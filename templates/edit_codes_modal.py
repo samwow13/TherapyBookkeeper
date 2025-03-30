@@ -201,6 +201,12 @@ document.addEventListener('DOMContentLoaded', function() {
         backdrop: 'static'  // Prevent clicks outside modal from closing it
     });
     
+    // Get form elements
+    const addCodeForm = document.getElementById('addCodeForm');
+    const addClassificationForm = document.getElementById('addClassificationForm');
+    const codeInput = document.getElementById('code');
+    const classificationInput = document.getElementById('classification');
+
     // Handle initial data loading
     editCodesModal.addEventListener('show.bs.modal', function() {
         loadCodesPage(1);
@@ -542,10 +548,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Show success message
                 showToast('Success', `Classification "${classificationToDelete}" has been deleted.`, 'success');
-                // Show the edit codes modal again after successful deletion
-                editCodesModalObj.show();
-                // Reload the classifications list
-                loadClassificationsPage(1);
+                // Reload the page to reflect changes everywhere
+                location.reload();
+                // // Show the edit codes modal again after successful deletion (No longer needed due to reload)
+                // editCodesModalObj.show();
+                // // Reload the classifications list (No longer needed due to reload)
+                // loadClassificationsPage(1); 
             } else {
                 // Show error message
                 showToast('Error', data.message || 'Failed to delete classification.', 'danger');
@@ -562,6 +570,74 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Handle Add Code form submission
+    addCodeForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+        const newCode = codeInput.value.trim();
+        if (!newCode) {
+            showToast('Error', 'Code cannot be empty.', 'danger');
+            return;
+        }
+
+        fetch('/add_code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `code=${encodeURIComponent(newCode)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Success', `Code "${newCode}" added successfully.`, 'success');
+                codeInput.value = ''; // Clear the input
+                loadCodesPage(1); // Reload the codes list in the modal
+                // Decide if a full page reload is needed for codes
+                // location.reload(); // Uncomment if needed
+            } else {
+                showToast('Error', data.message || 'Failed to add code.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding code:', error);
+            showToast('Error', 'Error adding code. Please try again later.', 'danger');
+        });
+    });
+
+    // Handle Add Classification form submission
+    addClassificationForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
+        const newClassification = classificationInput.value.trim();
+        if (!newClassification) {
+            showToast('Error', 'Classification cannot be empty.', 'danger');
+            return;
+        }
+
+        fetch('/add_classification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `classification=${encodeURIComponent(newClassification)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Success', `Classification "${newClassification}" added successfully.`, 'success');
+                classificationInput.value = ''; // Clear the input
+                // Reload the page to reflect changes everywhere
+                location.reload(); 
+                // loadClassificationsPage(1); // Reload the classifications list (no longer needed due to page reload)
+            } else {
+                showToast('Error', data.message || 'Failed to add classification.', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error adding classification:', error);
+            showToast('Error', 'Error adding classification. Please try again later.', 'danger');
+        });
+    });
+
     // Additional event handlers for usage warning and confirmation modals
     codeUsageWarningModal.addEventListener('hidden.bs.modal', function() {
         // Re-open edit codes modal after closing the warning
@@ -573,15 +649,33 @@ document.addEventListener('DOMContentLoaded', function() {
         editCodesModalObj.show();
     });
     
-    // If user cancels deletion, re-open the edit codes modal
-    document.querySelectorAll('.modal .btn-secondary[data-bs-dismiss="modal"]').forEach(btn => {
+    // If user cancels deletion FROM A DELETE CONFIRMATION MODAL, re-open the edit codes modal
+    document.querySelectorAll('#deleteCodeModal .btn-secondary[data-bs-dismiss="modal"], #deleteClassificationModal .btn-secondary[data-bs-dismiss="modal"]').forEach(btn => {
         btn.addEventListener('click', function() {
-            setTimeout(() => {
-                // Give time for the current modal to close before showing the edit codes modal
-                if (!document.querySelector('.modal.show')) {
-                    editCodesModalObj.show();
-                }
-            }, 300);
+            // Find the modal this button belongs to
+            const parentModal = this.closest('.modal');
+            if (!parentModal) return; // Should not happen
+
+            // Add a one-time listener for when the delete confirmation modal is hidden
+            parentModal.addEventListener('hidden.bs.modal', function reopenEditModal() {
+                // Remove this listener so it doesn't fire again
+                parentModal.removeEventListener('hidden.bs.modal', reopenEditModal);
+
+                // Check if any other modal is still open (e.g., the edit codes modal itself)
+                // We only want to re-show if no other modals are active
+                // Note: This logic might be complex if multiple nested modals are possible.
+                // A simpler approach might be to *always* try to show, Bootstrap handles if it's already shown.
+                // Let's try the simpler approach first.
+                
+                // Short delay to ensure the backdrop is fully gone before reopening
+                setTimeout(() => {
+                    // Check if editCodesModal is already shown (might happen if cancel is clicked fast)
+                    if (!editCodesModal.classList.contains('show')) {
+                        editCodesModalObj.show();
+                    }
+                }, 150); // Reduced delay slightly
+
+            }, { once: true }); // Use {once: true} to ensure listener auto-removes
         });
     });
     

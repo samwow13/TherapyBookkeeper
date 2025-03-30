@@ -70,27 +70,35 @@ class ClassificationManager:
     
     def add_classification(self):
         """
-        Handles adding a new transaction classification.
-        
+        Handles adding a new transaction classification via AJAX.
+
         Returns:
-            Redirect to the index page with a flash message
+            JSON response indicating success or failure.
         """
         classification = request.form.get('classification', '').strip()
         if not classification:
-            flash('Classification cannot be empty.', 'danger')
-            return redirect(url_for('index'))
-        
+            # Return JSON error instead of flashing and redirecting
+            return jsonify(success=False, message='Classification cannot be empty.')
+
         db = self.db_manager.get_db()
         cursor = db.cursor()
-        
+
         try:
+            # Check if classification already exists (optional but good practice)
+            cursor.execute("SELECT 1 FROM classifications WHERE classification = ?", (classification,))
+            if cursor.fetchone():
+                return jsonify(success=False, message=f'Classification \"{classification}\" already exists.')
+
             cursor.execute("INSERT INTO classifications (classification) VALUES (?)", (classification,))
             db.commit()
-            flash(f'Classification "{classification}" added successfully!', 'success')
+            # Return JSON success
+            return jsonify(success=True, message=f'Classification \"{classification}\" added successfully!')
         except Exception as e:
-            flash(f'Error adding classification: {e}', 'danger')
-        
-        return redirect(url_for('index'))
+            # Log the error for debugging
+            print(f"Database error adding classification: {e}") # Consider proper logging
+            db.rollback() # Rollback changes on error
+            # Return JSON error
+            return jsonify(success=False, message=f'Error adding classification. Please try again later.')
     
     def delete_classification(self, classification):
         """
