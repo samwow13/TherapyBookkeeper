@@ -68,58 +68,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const codeSelect = document.getElementById('code');
     const amountField = document.getElementById('amount');
     const dateField = document.getElementById('date');
-
-    function logBackdropState(eventName) {
-        const backdrop = document.querySelector('.modal-backdrop');
-        console.log(`--- ${eventName} ---`);
-        console.log('Modal classes:', addTransactionModalEl ? addTransactionModalEl.classList.toString() : 'Modal element not found');
-        if (backdrop) {
-            console.log('Backdrop found. Classes:', backdrop.classList.toString());
-            console.log('Backdrop style:', backdrop.style.cssText); // Log inline styles if any
-        } else {
-            console.log('Backdrop NOT found.');
-        }
-        console.log('--------------------');
-    }
+    const classificationSelect = document.getElementById('classification'); // Get classification select
 
     if (addTransactionModalEl) {
         addTransactionModalEl.addEventListener('show.bs.modal', function(event) {
-            console.log('Event: show.bs.modal triggered');
-            logBackdropState('Before Modal Show');
+            // Log the state of the classification dropdown (optional, can be removed later)
+            if (classificationSelect) {
+                console.log('--- Add Transaction Modal --- ');
+                console.log('Classification dropdown initial value before setting:', classificationSelect.value);
+                
+                // *** Force default value to "Client Income" ***
+                classificationSelect.value = "Client Income";
+                console.log('Classification dropdown value set to:', classificationSelect.value);
+
+            } else {
+                console.error('Classification select element not found!');
+            }
+
             // Set date field value
             if (dateField) {
                 const lastDate = localStorage.getItem('lastTransactionDate');
                 dateField.value = lastDate || new Date().toISOString().split('T')[0];
-                console.log('Set date field to:', dateField.value);
             }
 
             // Auto-fill amount field based on default selected code
             if (codeSelect && amountField && codeSelect.value) {
-                const numericCode = codeSelect.value.replace(/\D/g, '');
+                const numericCode = codeSelect.value.replace(/\\D/g, '');
                 if (numericCode) {
                     amountField.value = numericCode;
-                    console.log('Prefilled amount based on code:', numericCode);
                 }
             }
         });
 
-        addTransactionModalEl.addEventListener('shown.bs.modal', function(event) {
-            console.log('Event: shown.bs.modal triggered');
-            logBackdropState('After Modal Shown');
-        });
-
-        addTransactionModalEl.addEventListener('hide.bs.modal', function(event) {
-            console.log('Event: hide.bs.modal triggered');
-            logBackdropState('Before Modal Hide');
-        });
-
-        addTransactionModalEl.addEventListener('hidden.bs.modal', function(event) {
-            console.log('Event: hidden.bs.modal triggered');
-            // It's crucial to check the backdrop *slightly after* hidden, as Bootstrap might remove it asynchronously
-            setTimeout(() => {
-                logBackdropState('After Modal Hidden (async check)');
-            }, 100); // Check after 100ms
-        });
     } else {
         console.error('Add Transaction Modal element not found!');
     }
@@ -129,7 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
         addTransactionForm.addEventListener('submit', function() {
             if (dateField && dateField.value) {
                 localStorage.setItem('lastTransactionDate', dateField.value);
-                console.log('Saved last transaction date:', dateField.value);
             } else {
                  console.log('Could not save date on submit - field not found or empty');
             }
@@ -143,16 +122,12 @@ document.addEventListener('DOMContentLoaded', function() {
         codeSelect.addEventListener('change', function() {
             const selectedCode = codeSelect.value;
             if (selectedCode && amountField) {
-                const numericCode = selectedCode.replace(/\D/g, '');
-                 console.log('Code changed. Selected:', selectedCode, 'Numeric:', numericCode);
+                const numericCode = selectedCode.replace(/\\D/g, '');
                 if (numericCode) {
                     amountField.value = numericCode;
-                    console.log('Updated amount field to:', numericCode);
                 } else {
-                     console.log('No numeric value found in selected code.');
                 }
             } else {
-                 console.log('Code changed, but amount field or selection is invalid.');
             }
         });
     } else {

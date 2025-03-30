@@ -82,7 +82,10 @@ def inject_modal_data():
             # Get classifications for dropdown
             cursor.execute("SELECT classification FROM classifications ORDER BY classification")
             classifications = [row['classification'] for row in cursor.fetchall()]
-            classification_options = "".join([f'<option value="{c}">{c}</option>' for c in classifications])
+            classification_options = ""
+            for c in classifications:
+                selected_attr = ' selected' if c == "Client Income" else ''
+                classification_options += f'<option value="{c}"{selected_attr}>{c}</option>'
             
             # Get codes for dropdown
             cursor.execute("SELECT code FROM codes ORDER BY code")
