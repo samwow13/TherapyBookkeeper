@@ -73,7 +73,7 @@ INDEX_TEMPLATE = """
 <div class="card mb-4">
     <div class="card-header bg-light" id="codeSummaryHeader">
         <button id="codeSummaryButton" class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none {% if ui_state.get('codeSummaryCollapse') != 'show' %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#codeSummaryCollapse" aria-expanded="{{ 'true' if ui_state.get('codeSummaryCollapse') == 'show' else 'false' }}" aria-controls="codeSummaryCollapse">
-            <h5 class="mb-0 ms-3">Code Totals Summary</h5>
+            <h5 class="mb-0 ms-3">Code & Classifications Summary Tool</h5>
             <i class="bi bi-chevron-down me-3"></i>
         </button>
     </div>

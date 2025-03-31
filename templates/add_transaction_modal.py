@@ -68,38 +68,80 @@ document.addEventListener('DOMContentLoaded', function() {
     const codeSelect = document.getElementById('code');
     const amountField = document.getElementById('amount');
     const dateField = document.getElementById('date');
-    const classificationSelect = document.getElementById('classification'); // Get classification select
+    const descriptionField = document.getElementById('description');
+    const typeSelect = document.getElementById('type');
+    const classificationSelect = document.getElementById('classification');
 
     if (addTransactionModalEl) {
         addTransactionModalEl.addEventListener('show.bs.modal', function(event) {
-            // Log the state of the classification dropdown (optional, can be removed later)
-            if (classificationSelect) {
-                console.log('--- Add Transaction Modal --- ');
-                console.log('Classification dropdown initial value before setting:', classificationSelect.value);
+            // Check if modal was triggered by a button with data attributes (copy button)
+            const button = event.relatedTarget;
+            let isCopyOperation = false;
+            
+            if (button && button.classList.contains('copy-btn')) {
+                isCopyOperation = true;
                 
-                // *** Force default value to "Client Income" ***
-                classificationSelect.value = "Client Income";
-                console.log('Classification dropdown value set to:', classificationSelect.value);
-
-            } else {
-                console.error('Classification select element not found!');
+                // Fill in values from the data attributes
+                if (dateField && button.dataset.date) {
+                    dateField.value = button.dataset.date;
+                }
+                
+                if (descriptionField && button.dataset.description) {
+                    descriptionField.value = button.dataset.description;
+                }
+                
+                if (amountField && button.dataset.amount) {
+                    amountField.value = button.dataset.amount;
+                }
+                
+                if (typeSelect && button.dataset.type) {
+                    typeSelect.value = button.dataset.type;
+                }
+                
+                if (classificationSelect && button.dataset.classification) {
+                    classificationSelect.value = button.dataset.classification;
+                }
+                
+                if (codeSelect && button.dataset.code) {
+                    codeSelect.value = button.dataset.code;
+                }
+                
+                // Change modal title to reflect copy operation
+                const modalTitle = document.getElementById('addTransactionModalLabel');
+                if (modalTitle) {
+                    modalTitle.textContent = 'Copy Transaction';
+                }
             }
+            
+            // If not a copy operation, use the default behavior
+            if (!isCopyOperation) {
+                // Log the state of the classification dropdown (optional, can be removed later)
+                if (classificationSelect) {
+                    console.log('--- Add Transaction Modal --- ');
+                    console.log('Classification dropdown initial value before setting:', classificationSelect.value);
+                    
+                    // *** Force default value to "Client Income" ***
+                    classificationSelect.value = "Client Income";
+                    console.log('Classification dropdown value set to:', classificationSelect.value);
+                } else {
+                    console.error('Classification select element not found!');
+                }
 
-            // Set date field value
-            if (dateField) {
-                const lastDate = localStorage.getItem('lastTransactionDate');
-                dateField.value = lastDate || new Date().toISOString().split('T')[0];
-            }
+                // Set date field value with last used date or current date
+                if (dateField) {
+                    const lastDate = localStorage.getItem('lastTransactionDate');
+                    dateField.value = lastDate || new Date().toISOString().split('T')[0];
+                }
 
-            // Auto-fill amount field based on default selected code
-            if (codeSelect && amountField && codeSelect.value) {
-                const numericCode = codeSelect.value.replace(/\\D/g, '');
-                if (numericCode) {
-                    amountField.value = numericCode;
+                // Auto-fill amount field based on default selected code
+                if (codeSelect && amountField && codeSelect.value) {
+                    const numericCode = codeSelect.value.replace(/\\D/g, '');
+                    if (numericCode) {
+                        amountField.value = numericCode;
+                    }
                 }
             }
         });
-
     } else {
         console.error('Add Transaction Modal element not found!');
     }
