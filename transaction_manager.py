@@ -485,7 +485,49 @@ class TransactionManager:
                 code_totals[code]['net'] -= amount
         
         return dict(code_totals)
-    
+
+    def calculate_code_totals_by_year(self, year=None):
+        """
+        Calculate financial totals grouped by transaction code for a specific year.
+        
+        Args:
+            year: The year to filter by (integer or string). If None, all transactions are included.
+        
+        Returns:
+            A dictionary of code totals with income, expense, and net values
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        
+        if year is not None:
+            # Get all transactions with codes for the specified year
+            cursor.execute(
+                "SELECT amount, type, code FROM transactions "
+                "WHERE code IS NOT NULL AND code != '' AND strftime('%Y', date) = ?", 
+                (str(year),)
+            )
+        else:
+            # Get all transactions with codes
+            cursor.execute("SELECT amount, type, code FROM transactions WHERE code IS NOT NULL AND code != ''")
+        
+        transactions = cursor.fetchall()
+        
+        # Group transactions by code
+        code_totals = defaultdict(lambda: {'income': 0, 'expense': 0, 'net': 0})
+        
+        for tx in transactions:
+            amount = float(tx['amount'])
+            code = tx['code']
+            
+            if tx['type'] == 'credit':
+                code_totals[code]['income'] += amount
+                code_totals[code]['net'] += amount
+            else:  # debit
+                code_totals[code]['expense'] += amount
+                code_totals[code]['net'] -= amount
+        
+        return dict(code_totals)
+
     def get_transactions_by_month_dict(self):
         """
         Get all transactions organized by month.
@@ -624,7 +666,19 @@ class TransactionManager:
         Returns:
             Rendered HTML for the index page
         """
-        from flask import render_template_string
+        from flask import render_template_string, request
+        
+        # Get selected year for code and classification summaries
+        selected_year = request.args.get('year')
+        if selected_year:
+            try:
+                selected_year = int(selected_year)
+            except ValueError:
+                selected_year = None
+        
+        # If no year specified, use current year
+        if not selected_year:
+            selected_year = datetime.now().year
         
         # Get all codes and classifications for dropdowns
         db = self.get_db()
@@ -645,6 +699,10 @@ class TransactionManager:
         code_options = ""
         for code in codes:
             code_options += f'<option value="{code}">{code}</option>'
+        
+        # Get year options for the code totals filter
+        cursor.execute("SELECT DISTINCT strftime('%Y', date) as year FROM transactions ORDER BY year DESC")
+        available_years = [row['year'] for row in cursor.fetchall()]
         
         # Get transactions based on month filter
         if month:
@@ -700,8 +758,11 @@ class TransactionManager:
                 month_data['classification_summary'] = {}
                 self.app.logger.error(f"Could not parse year/month from month_key: {month_key}")
 
-        # Get code summaries
-        code_totals = self.calculate_code_totals()
+        # Get code summaries filtered by year
+        code_totals = self.calculate_code_totals_by_year(selected_year)
+        
+        # Get classification summaries filtered by year
+        classification_totals = self.get_yearly_classification_summary(selected_year)
         
         # Get all transactions organized by month for the "All Transactions" section
         transactions_by_month = self.get_transactions_by_month_dict()
@@ -729,10 +790,13 @@ class TransactionManager:
             net_income=net_income,
             monthly_totals=monthly_totals,
             code_totals=code_totals,
+            classification_totals=classification_totals,
             overall_income=overall_income,
             overall_expense=overall_expense,
             overall_net=overall_net,
             selected_month=month,
+            selected_year=selected_year,
+            available_years=available_years,
             transactions_by_month=transactions_by_month,
             all_transactions=all_transactions,
             monthly_transactions=transactions if month else None,
@@ -892,6 +956,39 @@ class TransactionManager:
             ORDER BY total_amount DESC
         """
         cursor.execute(query, (str(year), month_str))
+        rows = cursor.fetchall()
+
+        summary = {row['classification']: row['total_amount'] for row in rows}
+        return summary
+
+    def get_yearly_classification_summary(self, year):
+        """
+        Get a summary of transactions grouped by classification for a specific year.
+
+        Args:
+            year: The year (integer or string)
+
+        Returns:
+            A dictionary where keys are classification names and values are the
+            sum of transaction amounts for that classification in the specified year.
+            Returns an empty dictionary if no relevant transactions are found.
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        query = """
+            SELECT 
+                classification, 
+                SUM(CASE 
+                    WHEN type = 'credit' THEN amount 
+                    WHEN type = 'debit' THEN -amount 
+                    ELSE 0 
+                END) as total_amount
+            FROM transactions
+            WHERE strftime('%Y', date) = ? AND classification IS NOT NULL AND classification != ''
+            GROUP BY classification
+            ORDER BY total_amount DESC
+        """
+        cursor.execute(query, (str(year),))
         rows = cursor.fetchall()
 
         summary = {row['classification']: row['total_amount'] for row in rows}

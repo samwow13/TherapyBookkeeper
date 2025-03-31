@@ -9,7 +9,9 @@ BASE_TEMPLATE = """
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Therapy Bookkeeping | {{ title }}</title>
+    <title>Angela's Therapy Bookkeeping | {{ title }}</title>
+    <!-- Favicon - Clippy icon for browser tab -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
@@ -39,8 +41,8 @@ BASE_TEMPLATE = """
         }
         .clippy-textbox {
             position: absolute;
-            top: 0;
-            right: 90px; /* Position to the left of Clippy */
+            top: -140px;
+            right: -30px;
             width: 200px;
             opacity: 0;
             transition: opacity 0.3s ease;

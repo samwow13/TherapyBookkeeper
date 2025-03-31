@@ -79,36 +79,91 @@ INDEX_TEMPLATE = """
     </div>
     <div id="codeSummaryCollapse" class="collapse" aria-labelledby="codeSummaryHeader">
         <div class="card-body">
-            {% if code_totals %}
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm"> {# table-sm #}
-                        <thead class="table-light">
-                            <tr>
-                                <th>Code</th>
-                                <th>Income</th>
-                                <th>Expense</th>
-                                <th>Net</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for code, totals in code_totals.items() | sort %} {# Sort codes alphabetically #}
-                                <tr>
-                                    <td><strong>{{ code }}</strong></td>
-                                    <td class="credit">{{ '{:,.2f}'.format(totals.income) }}</td>
-                                    <td class="debit">{{ '{:,.2f}'.format(totals.expense) }}</td>
-                                    <td class="{% if totals.net >= 0 %}credit{% else %}debit{% endif %}">
-                                        {{ '{:,.2f}'.format(totals.net) }}
-                                    </td>
-                                </tr>
-                            {% else %}
-                             <tr><td colspan="4" class="text-center text-muted">No code data available yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <!-- Year Filter for Code Totals -->
+            <div class="d-flex justify-content-end mb-3">
+                <div class="input-group" style="width: 200px;">
+                    <select id="codeSummaryYearFilter" class="form-select">
+                        {% for year in available_years %}
+                            <option value="{{ year }}" {% if year|int == selected_year|int %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                    <button id="applyCodeSummaryYearFilter" class="btn btn-primary">
+                        <i class="bi bi-filter"></i> Filter
+                    </button>
                 </div>
-            {% else %}
-                <p class="text-muted">No code data available yet.</p>
-            {% endif %}
+            </div>
+            
+            <!-- Tabs for Codes and Classifications -->
+            <ul class="nav nav-tabs mb-3" id="codeSummaryTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="code-totals-tab" data-bs-toggle="tab" data-bs-target="#code-totals" type="button" role="tab" aria-controls="code-totals" aria-selected="true">Code Totals</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="classification-totals-tab" data-bs-toggle="tab" data-bs-target="#classification-totals" type="button" role="tab" aria-controls="classification-totals" aria-selected="false">Classification Totals</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="codeSummaryTabContent">
+                <!-- Code Totals Tab -->
+                <div class="tab-pane fade show active" id="code-totals" role="tabpanel" aria-labelledby="code-totals-tab">
+                    {% if code_totals %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm"> {# table-sm #}
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Income</th>
+                                        <th>Expense</th>
+                                        <th>Net</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for code, totals in code_totals.items() | sort %} {# Sort codes alphabetically #}
+                                        <tr>
+                                            <td><strong>{{ code }}</strong></td>
+                                            <td class="text-success">${{ "%.2f"|format(totals.income) }}</td>
+                                            <td class="text-danger">${{ "%.2f"|format(totals.expense) }}</td>
+                                            <td class="{% if totals.net >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                ${{ "%.2f"|format(totals.net) }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No code totals available for {{ selected_year }}.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Classification Totals Tab -->
+                <div class="tab-pane fade" id="classification-totals" role="tabpanel" aria-labelledby="classification-totals-tab">
+                    {% if classification_totals %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Classification</th>
+                                        <th>Net Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for classification, amount in classification_totals.items() | sort(reverse=True, attribute='1') %}
+                                        <tr>
+                                            <td><strong>{{ classification }}</strong></td>
+                                            <td class="{% if amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                ${{ "%.2f"|format(amount) }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No classification totals available for {{ selected_year }}.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -617,6 +672,27 @@ INDEX_TEMPLATE = """
                 if (event.key === 'Enter') {
                     applyFlatFilter();
                 }
+            });
+        }
+    });
+</script>
+
+<!-- Year Filter JavaScript for Code Summary -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Year filter for Code Summary section
+        const codeSummaryYearFilter = document.getElementById('codeSummaryYearFilter');
+        const applyCodeSummaryYearFilter = document.getElementById('applyCodeSummaryYearFilter');
+        
+        if (codeSummaryYearFilter && applyCodeSummaryYearFilter) {
+            applyCodeSummaryYearFilter.addEventListener('click', function() {
+                const selectedYear = codeSummaryYearFilter.value;
+                // Get current URL
+                const currentUrl = new URL(window.location.href);
+                // Update or add the year parameter
+                currentUrl.searchParams.set('year', selectedYear);
+                // Redirect to the updated URL
+                window.location.href = currentUrl.toString();
             });
         }
     });
