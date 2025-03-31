@@ -306,7 +306,7 @@ def save_ui_state():
     state = data['state']
 
     # Basic validation (optional: add more specific checks if needed)
-    allowed_prefixes = ('allTransactionsCollapse', 'monthCollapse-', 'codeSummaryCollapse', 'monthlySummaryCollapse', 'selected_month')
+    allowed_prefixes = ('allTransactionsCollapse', 'monthCollapse-', 'codeSummaryCollapse', 'monthlySummaryCollapse', 'selected_month', 'codeSummaryActiveTab')
     if not element_id or not any(element_id.startswith(p) for p in allowed_prefixes):
          return jsonify(success=False, error="Invalid element ID"), 400
     
@@ -315,6 +315,10 @@ def save_ui_state():
         # For selected_month, the state is a month key (format: YYYY-MM)
         if not state or not isinstance(state, str):
             return jsonify(success=False, error="Invalid month key"), 400
+    elif element_id == 'codeSummaryActiveTab':
+        # For codeSummaryActiveTab, the state is a tab ID
+        if state not in ('code-totals', 'classification-totals'):
+            return jsonify(success=False, error="Invalid tab ID"), 400
     else:
         # For collapse elements, state must be 'show' or 'hide'
         if state not in ('show', 'hide'):

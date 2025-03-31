@@ -96,16 +96,16 @@ INDEX_TEMPLATE = """
             <!-- Tabs for Codes and Classifications -->
             <ul class="nav nav-tabs mb-3" id="codeSummaryTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="code-totals-tab" data-bs-toggle="tab" data-bs-target="#code-totals" type="button" role="tab" aria-controls="code-totals" aria-selected="true">Code Totals</button>
+                    <button class="nav-link {% if ui_state.get('codeSummaryActiveTab') != 'classification-totals' %}active{% endif %}" id="code-totals-tab" data-bs-toggle="tab" data-bs-target="#code-totals" type="button" role="tab" aria-controls="code-totals" aria-selected="{{ 'true' if ui_state.get('codeSummaryActiveTab') != 'classification-totals' else 'false' }}">Code Totals</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="classification-totals-tab" data-bs-toggle="tab" data-bs-target="#classification-totals" type="button" role="tab" aria-controls="classification-totals" aria-selected="false">Classification Totals</button>
+                    <button class="nav-link {% if ui_state.get('codeSummaryActiveTab') == 'classification-totals' %}active{% endif %}" id="classification-totals-tab" data-bs-toggle="tab" data-bs-target="#classification-totals" type="button" role="tab" aria-controls="classification-totals" aria-selected="{{ 'true' if ui_state.get('codeSummaryActiveTab') == 'classification-totals' else 'false' }}">Classification Totals</button>
                 </li>
             </ul>
             
             <div class="tab-content" id="codeSummaryTabContent">
                 <!-- Code Totals Tab -->
-                <div class="tab-pane fade show active" id="code-totals" role="tabpanel" aria-labelledby="code-totals-tab">
+                <div class="tab-pane fade {% if ui_state.get('codeSummaryActiveTab') != 'classification-totals' %}show active{% endif %}" id="code-totals" role="tabpanel" aria-labelledby="code-totals-tab">
                     {% if code_totals %}
                         <div class="table-responsive">
                             <table class="table table-striped table-sm"> {# table-sm #}
@@ -137,7 +137,7 @@ INDEX_TEMPLATE = """
                 </div>
                 
                 <!-- Classification Totals Tab -->
-                <div class="tab-pane fade" id="classification-totals" role="tabpanel" aria-labelledby="classification-totals-tab">
+                <div class="tab-pane fade {% if ui_state.get('codeSummaryActiveTab') == 'classification-totals' %}show active{% endif %}" id="classification-totals" role="tabpanel" aria-labelledby="classification-totals-tab">
                     {% if classification_totals %}
                         <div class="table-responsive">
                             <table class="table table-striped table-sm">
@@ -1005,6 +1005,35 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Code Summary tab state tracking -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const codeTotalsTab = document.getElementById('code-totals-tab');
+        const classificationTotalsTab = document.getElementById('classification-totals-tab');
+        
+        if (codeTotalsTab && classificationTotalsTab) {
+            // Listen for tab shown events
+            codeTotalsTab.addEventListener('shown.bs.tab', function() {
+                saveUIState('codeSummaryActiveTab', 'code-totals');
+                try {
+                    sessionStorage.setItem('codeSummaryActiveTab', 'code-totals');
+                } catch (e) {
+                    console.error('Failed to save tab state to sessionStorage:', e);
+                }
+            });
+            
+            classificationTotalsTab.addEventListener('shown.bs.tab', function() {
+                saveUIState('codeSummaryActiveTab', 'classification-totals');
+                try {
+                    sessionStorage.setItem('codeSummaryActiveTab', 'classification-totals');
+                } catch (e) {
+                    console.error('Failed to save tab state to sessionStorage:', e);
+                }
+            });
+        }
+    });
+</script>
+
 <!-- Script for saving UI state -->
 <script>
     function saveUIState(id, state) {
@@ -1111,5 +1140,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% include 'modals.html' %}
 {% endblock %}
-
 """
