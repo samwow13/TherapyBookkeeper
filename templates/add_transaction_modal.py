@@ -133,11 +133,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     dateField.value = lastDate || new Date().toISOString().split('T')[0];
                 }
 
-                // Auto-fill amount field based on default selected code
-                if (codeSelect && amountField && codeSelect.value) {
-                    const numericCode = codeSelect.value.replace(/\\D/g, '');
-                    if (numericCode) {
-                        amountField.value = numericCode;
+                // Set code field with last used code or default to "125"
+                if (codeSelect) {
+                    const lastCode = localStorage.getItem('lastTransactionCode');
+                    if (lastCode) {
+                        codeSelect.value = lastCode;
+                        console.log('Using last used code:', lastCode);
+                    } else {
+                        // Default to code "125" if no last code found
+                        const defaultOptions = Array.from(codeSelect.options);
+                        const code125Option = defaultOptions.find(option => option.value === "125");
+                        if (code125Option) {
+                            codeSelect.value = "125";
+                        }
+                        console.log('No last code found, defaulting to 125');
+                    }
+                    
+                    // Auto-fill amount field based on selected code
+                    if (amountField && codeSelect.value) {
+                        const numericCode = codeSelect.value.replace(/\\D/g, '');
+                        if (numericCode) {
+                            amountField.value = numericCode;
+                        }
                     }
                 }
             }
@@ -146,17 +163,26 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Add Transaction Modal element not found!');
     }
 
-    // Save date when form is submitted
+    // Save date and code when form is submitted
     if (addTransactionForm) {
         addTransactionForm.addEventListener('submit', function() {
+            // Save the date
             if (dateField && dateField.value) {
                 localStorage.setItem('lastTransactionDate', dateField.value);
             } else {
-                 console.log('Could not save date on submit - field not found or empty');
+                console.log('Could not save date on submit - field not found or empty');
+            }
+            
+            // Save the code
+            if (codeSelect && codeSelect.value) {
+                localStorage.setItem('lastTransactionCode', codeSelect.value);
+                console.log('Saved last used code:', codeSelect.value);
+            } else {
+                console.log('Could not save code on submit - field not found or empty');
             }
         });
     } else {
-         console.error('Add Transaction Form element not found!');
+        console.error('Add Transaction Form element not found!');
     }
 
     // Auto-fill amount field when code is selected
@@ -167,9 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const numericCode = selectedCode.replace(/\\D/g, '');
                 if (numericCode) {
                     amountField.value = numericCode;
-                } else {
                 }
-            } else {
             }
         });
     } else {
