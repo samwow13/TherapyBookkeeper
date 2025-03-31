@@ -306,7 +306,7 @@ def save_ui_state():
     state = data['state']
 
     # Basic validation (optional: add more specific checks if needed)
-    allowed_prefixes = ('allTransactionsCollapse', 'monthCollapse-')
+    allowed_prefixes = ('allTransactionsCollapse', 'monthCollapse-', 'codeSummaryCollapse')
     if not element_id or not any(element_id.startswith(p) for p in allowed_prefixes):
          return jsonify(success=False, error="Invalid element ID"), 400
     if state not in ('show', 'hide'):

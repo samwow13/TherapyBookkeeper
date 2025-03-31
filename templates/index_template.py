@@ -72,12 +72,12 @@ INDEX_TEMPLATE = """
 <!-- Code Summary Section (Dropdown) -->
 <div class="card mb-4">
     <div class="card-header bg-light" id="codeSummaryHeader">
-        <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#codeSummaryCollapse" aria-expanded="false" aria-controls="codeSummaryCollapse">
+        <button id="codeSummaryButton" class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none {% if ui_state.get('codeSummaryCollapse') != 'show' %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#codeSummaryCollapse" aria-expanded="{{ 'true' if ui_state.get('codeSummaryCollapse') == 'show' else 'false' }}" aria-controls="codeSummaryCollapse">
             <h5 class="mb-0 ms-3">Code Totals Summary</h5>
             <i class="bi bi-chevron-down me-3"></i>
         </button>
     </div>
-    <div id="codeSummaryCollapse" class="collapse" aria-labelledby="codeSummaryHeader">
+    <div id="codeSummaryCollapse" class="collapse {% if ui_state.get('codeSummaryCollapse') == 'show' %}show{% endif %}" aria-labelledby="codeSummaryHeader">
         <div class="card-body">
             <!-- Year Filter for Code Totals -->
             <div class="d-flex justify-content-end mb-3">
@@ -687,12 +687,51 @@ INDEX_TEMPLATE = """
         if (codeSummaryYearFilter && applyCodeSummaryYearFilter) {
             applyCodeSummaryYearFilter.addEventListener('click', function() {
                 const selectedYear = codeSummaryYearFilter.value;
-                // Get current URL
-                const currentUrl = new URL(window.location.href);
-                // Update or add the year parameter
-                currentUrl.searchParams.set('year', selectedYear);
-                // Redirect to the updated URL
-                window.location.href = currentUrl.toString();
+                
+                // Instead of saving UI state and immediately redirecting,
+                // wait for the save to complete before redirecting
+                fetch('/save_ui_state', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: 'codeSummaryCollapse', state: 'show' })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // After the state is saved successfully, redirect to the new URL
+                        const currentUrl = new URL(window.location.href);
+                        // Update or add the year parameter
+                        currentUrl.searchParams.set('year', selectedYear);
+                        // Redirect to the updated URL
+                        window.location.href = currentUrl.toString();
+                    } else {
+                        console.error('Failed to save UI state');
+                        // Still redirect even if saving state fails
+                        const currentUrl = new URL(window.location.href);
+                        currentUrl.searchParams.set('year', selectedYear);
+                        window.location.href = currentUrl.toString();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error saving UI state:', error);
+                    // Still redirect even if an error occurs
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('year', selectedYear);
+                    window.location.href = currentUrl.toString();
+                });
+            });
+        }
+        
+        // Add event listener for the codeSummaryCollapse element
+        const codeSummaryCollapse = document.getElementById('codeSummaryCollapse');
+        if (codeSummaryCollapse) {
+            codeSummaryCollapse.addEventListener('shown.bs.collapse', function() {
+                saveUIState('codeSummaryCollapse', 'show');
+            });
+            
+            codeSummaryCollapse.addEventListener('hidden.bs.collapse', function() {
+                saveUIState('codeSummaryCollapse', 'hide');
             });
         }
     });
