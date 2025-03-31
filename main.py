@@ -306,17 +306,28 @@ def save_ui_state():
     state = data['state']
 
     # Basic validation (optional: add more specific checks if needed)
-    allowed_prefixes = ('allTransactionsCollapse', 'monthCollapse-', 'codeSummaryCollapse')
+    allowed_prefixes = ('allTransactionsCollapse', 'monthCollapse-', 'codeSummaryCollapse', 'monthlySummaryCollapse', 'selected_month')
     if not element_id or not any(element_id.startswith(p) for p in allowed_prefixes):
          return jsonify(success=False, error="Invalid element ID"), 400
-    if state not in ('show', 'hide'):
-         return jsonify(success=False, error="Invalid state"), 400
+    
+    # Different validation for different types of elements
+    if element_id == 'selected_month':
+        # For selected_month, the state is a month key (format: YYYY-MM)
+        if not state or not isinstance(state, str):
+            return jsonify(success=False, error="Invalid month key"), 400
+    else:
+        # For collapse elements, state must be 'show' or 'hide'
+        if state not in ('show', 'hide'):
+            return jsonify(success=False, error="Invalid state"), 400
 
     if 'ui_state' not in session:
         session['ui_state'] = {}
 
     session['ui_state'][element_id] = state
     session.modified = True  # Mark session as modified
+    
+    app.logger.debug(f"Saved UI State: {element_id} = {state}")
+    app.logger.debug(f"Full UI State: {session['ui_state']}")
 
     # print(f"Saved UI State: {session['ui_state']}") # Debugging
     return jsonify(success=True)

@@ -171,19 +171,19 @@ INDEX_TEMPLATE = """
 <!-- Monthly Summary -->
 <div class="card mb-4">
     <div class="card-header bg-light" id="monthlySummaryHeader">
-         <button class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#monthlySummaryCollapse" aria-expanded="false" aria-controls="monthlySummaryCollapse">
+         <button id="monthlySummaryButton" class="btn btn-link btn-block text-left d-flex justify-content-between align-items-center w-100 p-0 text-decoration-none {% if ui_state.get('monthlySummaryCollapse') != 'show' %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#monthlySummaryCollapse" aria-expanded="{{ 'true' if ui_state.get('monthlySummaryCollapse') == 'show' else 'false' }}" aria-controls="monthlySummaryCollapse">
              <h5 class="mb-0 ms-3">Monthly Summary</h5>
              <i class="bi bi-chevron-down me-3"></i>
          </button>
     </div>
-    <div id="monthlySummaryCollapse" class="collapse" aria-labelledby="monthlySummaryHeader">
+    <div id="monthlySummaryCollapse" class="collapse {% if ui_state.get('monthlySummaryCollapse') == 'show' %}show{% endif %}" aria-labelledby="monthlySummaryHeader">
         <div class="card-body">
             {% if monthly_totals %}
                 <div class="accordion" id="monthlyAccordion">
                     {% for month_data in monthly_totals %}
                     <div class="accordion-item" data-month-key="{{ month_data.month_key }}">
                         <h2 class="accordion-header" id="heading{{ loop.index }}">
-                            <button class="accordion-button {% if selected_month == month_data.month_key %}{% else %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{% if selected_month == month_data.month_key %}true{% else %}false{% endif %}" aria-controls="collapse{{ loop.index }}">
+                            <button class="accordion-button {% if ui_state.get('selected_month') == month_data.month_key %}{% else %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{{ 'true' if ui_state.get('selected_month') == month_data.month_key else 'false' }}" aria-controls="collapse{{ loop.index }}">
                                 <div class="d-flex justify-content-between align-items-center w-100">
                                     <div class="fw-bold fs-5">{{ month_data.month }}</div>
                                     <div class="d-flex gap-3 text-end"> {# text-end for alignment #}
@@ -203,7 +203,7 @@ INDEX_TEMPLATE = """
                                 </div>
                             </button>
                         </h2>
-                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if selected_month == month_data.month_key %}show{% endif %}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#monthlyAccordion">
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if ui_state.get('selected_month') == month_data.month_key %}show{% endif %}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#monthlyAccordion">
                             <div class="accordion-body">
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item">
@@ -728,10 +728,22 @@ INDEX_TEMPLATE = """
         if (codeSummaryCollapse) {
             codeSummaryCollapse.addEventListener('shown.bs.collapse', function() {
                 saveUIState('codeSummaryCollapse', 'show');
+                // Save to sessionStorage
+                try {
+                    sessionStorage.setItem('codeSummaryCollapse', 'show');
+                } catch (e) {
+                    console.error('Failed to save state to sessionStorage:', e);
+                }
             });
             
             codeSummaryCollapse.addEventListener('hidden.bs.collapse', function() {
                 saveUIState('codeSummaryCollapse', 'hide');
+                // Save to sessionStorage
+                try {
+                    sessionStorage.setItem('codeSummaryCollapse', 'hide');
+                } catch (e) {
+                    console.error('Failed to save state to sessionStorage:', e);
+                }
             });
         }
     });
@@ -828,11 +840,97 @@ document.addEventListener('DOMContentLoaded', function() {
         // Determine state based on the event type
         const state = event.type === 'shown.bs.collapse' ? 'show' : 'hide';
 
-        // Ensure we are only saving state for the intended elements
         if (elementId === 'allTransactionsCollapse' || elementId.startsWith('monthCollapse-')) {
+            // Save to server via AJAX
             saveUIState(elementId, state);
+            // Save to browser's sessionStorage
+            try {
+                sessionStorage.setItem(elementId, state);
+                console.log(`State saved to sessionStorage: ${elementId} = ${state}`);
+            } catch (e) {
+                console.error('Failed to save state to sessionStorage:', e);
+            }
         }
     }
+
+    // Initial check - Apply state from sessionStorage for faster perceived load (optional but recommended)
+    // This complements the server-side rendering based on Flask session
+    collapseElements.forEach(element => {
+        const savedState = sessionStorage.getItem(element.id);
+        if (savedState === 'show') {
+            // Use Bootstrap's JS API to show without triggering the event/AJAX call again
+            const bsCollapse = bootstrap.Collapse.getInstance(element) || new bootstrap.Collapse(element, { toggle: false });
+            bsCollapse.show();
+        } else if (savedState === 'hide') {
+             const bsCollapse = bootstrap.Collapse.getInstance(element) || new bootstrap.Collapse(element, { toggle: false });
+             bsCollapse.hide();
+        }
+        // If no state in sessionStorage, rely on server-rendered state
+    });
+
+     // Also save to sessionStorage when toggling
+     function handleCollapseToggle(event) { // Redefine to include sessionStorage
+        const elementId = event.target.id;
+        const state = event.type === 'shown.bs.collapse' ? 'show' : 'hide';
+
+        if (elementId === 'allTransactionsCollapse' || elementId.startsWith('monthCollapse-')) {
+            // Save to server via AJAX
+            saveUIState(elementId, state);
+            // Save to browser's sessionStorage
+            try {
+                sessionStorage.setItem(elementId, state);
+                console.log(`State saved to sessionStorage: ${elementId} = ${state}`);
+            } catch (e) {
+                console.error('Failed to save state to sessionStorage:', e);
+            }
+        }
+    }
+    
+    // Monthly Summary collapse state tracking
+    const monthlySummaryButton = document.getElementById('monthlySummaryButton');
+    const monthlySummaryCollapse = document.getElementById('monthlySummaryCollapse');
+    
+    if (monthlySummaryButton && monthlySummaryCollapse) {
+        monthlySummaryCollapse.addEventListener('shown.bs.collapse', function() {
+            saveUIState('monthlySummaryCollapse', 'show');
+            // Save to sessionStorage
+            try {
+                sessionStorage.setItem('monthlySummaryCollapse', 'show');
+            } catch (e) {
+                console.error('Failed to save state to sessionStorage:', e);
+            }
+        });
+        
+        monthlySummaryCollapse.addEventListener('hidden.bs.collapse', function() {
+            saveUIState('monthlySummaryCollapse', 'hide');
+            // Save to sessionStorage
+            try {
+                sessionStorage.setItem('monthlySummaryCollapse', 'hide');
+            } catch (e) {
+                console.error('Failed to save state to sessionStorage:', e);
+            }
+        });
+    }
+    
+    // Month accordion state tracking
+    const monthAccordionItems = document.querySelectorAll('#monthlyAccordion .accordion-item');
+    
+    monthAccordionItems.forEach(item => {
+        const monthKey = item.getAttribute('data-month-key');
+        const accordionCollapse = item.querySelector('.accordion-collapse');
+        
+        if (accordionCollapse && monthKey) {
+            accordionCollapse.addEventListener('shown.bs.collapse', function() {
+                saveUIState('selected_month', monthKey);
+                // Save to sessionStorage
+                try {
+                    sessionStorage.setItem('selected_month', monthKey);
+                } catch (e) {
+                    console.error('Failed to save state to sessionStorage:', e);
+                }
+            });
+        }
+    });
 
     // === Year Filter Persistence ===
     const yearFilterInput = document.getElementById('yearFilter');
@@ -903,11 +1001,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Restore scroll position when the window finishes loading all content
     window.addEventListener('load', restoreScrollPosition);
-
     // --- End Scroll Position Persistence ---
+});
+</script>
 
-    function saveUIState(elementId, state) {
-        console.log(`Saving state: ${elementId} = ${state}`); // Debug logging
+<!-- Script for saving UI state -->
+<script>
+    function saveUIState(id, state) {
+        console.log(`Saving state: ${id} = ${state}`); // Debug logging
         fetch('/save_ui_state', {
             method: 'POST',
             headers: {
@@ -915,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // IMPORTANT: Add CSRF token header if your Flask app uses CSRF protection
                 // Example for Flask-WTF: 'X-CSRFToken': '{{ '{{ csrf_token() }}' }}'
             },
-            body: JSON.stringify({ id: elementId, state: state })
+            body: JSON.stringify({ id: id, state: state })
         })
         .then(response => {
             if (!response.ok) {
@@ -930,40 +1031,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Optionally, inform the user about the network error
         });
     }
-
-    // Initial check - Apply state from sessionStorage for faster perceived load (optional but recommended)
-    // This complements the server-side rendering based on Flask session
-    collapseElements.forEach(element => {
-        const savedState = sessionStorage.getItem(element.id);
-        if (savedState === 'show') {
-            // Use Bootstrap's JS API to show without triggering the event/AJAX call again
-            const bsCollapse = bootstrap.Collapse.getInstance(element) || new bootstrap.Collapse(element, { toggle: false });
-            bsCollapse.show();
-        } else if (savedState === 'hide') {
-             const bsCollapse = bootstrap.Collapse.getInstance(element) || new bootstrap.Collapse(element, { toggle: false });
-             bsCollapse.hide();
-        }
-        // If no state in sessionStorage, rely on server-rendered state
-    });
-
-     // Also save to sessionStorage when toggling
-     function handleCollapseToggle(event) { // Redefine to include sessionStorage
-        const elementId = event.target.id;
-        const state = event.type === 'shown.bs.collapse' ? 'show' : 'hide';
-
-        if (elementId === 'allTransactionsCollapse' || elementId.startsWith('monthCollapse-')) {
-            // Save to server via AJAX
-            saveUIState(elementId, state);
-            // Save to browser's sessionStorage
-            try {
-                sessionStorage.setItem(elementId, state);
-                console.log(`State saved to sessionStorage: ${elementId} = ${state}`);
-            } catch (e) {
-                console.error('Failed to save state to sessionStorage:', e);
-            }
-        }
-    }
-});
 </script>
 
 {% if selected_month %}

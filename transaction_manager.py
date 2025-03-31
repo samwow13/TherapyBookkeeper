@@ -13,7 +13,7 @@ This module handles all transaction-related operations including:
 import sqlite3
 from datetime import datetime
 from collections import defaultdict
-from flask import request, redirect, url_for, flash, g
+from flask import request, redirect, url_for, flash, g, session
 from database import DatabaseManager
 from templates.modals_template import INDEX_TEMPLATE, PRINT_TEMPLATE
 
@@ -49,6 +49,8 @@ class TransactionManager:
         Returns:
             A redirect to the index page
         """
+        from flask import session
+        
         if request.method == 'POST':
             date = request.form.get('date')
             description = request.form.get('description')
@@ -84,6 +86,23 @@ class TransactionManager:
             except sqlite3.Error as e:
                 flash(f'Database error: {e}', 'danger')
                 
+        # Calculate which month the transaction belongs to (for potential redirect)
+        transaction_month = None
+        if date:
+            try:
+                # Extract year and month from the date (format: YYYY-MM-DD)
+                transaction_month = date[:7]  # Gets YYYY-MM portion
+                
+                # If this is a new month's transaction, update selected_month in UI state
+                if 'ui_state' in session and transaction_month:
+                    session['ui_state']['selected_month'] = transaction_month
+                    # Also ensure monthly summary is open to show the new transaction
+                    session['ui_state']['monthlySummaryCollapse'] = 'show'
+                    session.modified = True
+                    self.app.logger.debug(f"Updated UI state for new transaction: {session['ui_state']}")
+            except Exception as e:
+                self.app.logger.error(f"Error setting selected month: {e}")
+                
         return redirect(url_for('index'))
     
     def edit_transaction(self, transaction_id):
@@ -96,6 +115,8 @@ class TransactionManager:
         Returns:
             A redirect to the index page
         """
+        from flask import session
+        
         if request.method == 'POST':
             date = request.form.get('date')
             description = request.form.get('description')
@@ -133,6 +154,23 @@ class TransactionManager:
                 flash('Invalid amount format.', 'danger')
             except sqlite3.Error as e:
                 flash(f'Database error: {e}', 'danger')
+        
+        # Calculate which month the transaction belongs to (for potential redirect)
+        transaction_month = None
+        if date:
+            try:
+                # Extract year and month from the date (format: YYYY-MM-DD)
+                transaction_month = date[:7]  # Gets YYYY-MM portion
+                
+                # If this is a transaction, update selected_month in UI state
+                if 'ui_state' in session and transaction_month:
+                    session['ui_state']['selected_month'] = transaction_month
+                    # Also ensure monthly summary is open to show the transaction
+                    session['ui_state']['monthlySummaryCollapse'] = 'show'
+                    session.modified = True
+                    self.app.logger.debug(f"Updated UI state for edited transaction: {session['ui_state']}")
+            except Exception as e:
+                self.app.logger.error(f"Error setting selected month: {e}")
                 
         return redirect(url_for('index'))
     
