@@ -195,6 +195,34 @@ INDEX_TEMPLATE = """
                                                 {% endfor %}
                                             </div>
                                         </div>
+                                        <!-- Classifications Summary -->
+                                        <div class="mt-3">
+                                            <h6>Classifications Summary</h6>
+                                            {% if month_data.classification_summary %}
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-hover table-bordered small">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>Classification</th>
+                                                                <th class="text-end">Total Amount</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for classification, total in month_data.classification_summary.items() %}
+                                                            <tr>
+                                                                <td>{{ classification }}</td>
+                                                                <td class="text-end">{{ '{:,.2f}'.format(total) }}</td>
+                                                            </tr>
+                                                            {% else %}
+                                                            <tr><td colspan="2" class="text-center text-muted">No classification data for this month.</td></tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            {% else %}
+                                                <p class="text-muted small">No classification data for this month.</p>
+                                            {% endif %}
+                                        </div>
                                     </li>
                                     {% endif %} {# End if month_data.codes #}
                                 </ul>

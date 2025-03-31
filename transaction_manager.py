@@ -686,7 +686,20 @@ class TransactionManager:
         
         # Get monthly summaries
         monthly_totals = self.calculate_monthly_totals()
-        
+
+        # Add classification summaries to monthly totals
+        for month_data in monthly_totals:
+            month_key = month_data['month_key']  # 'YYYY-MM'
+            try:
+                year_str, month_str = month_key.split('-')
+                year = int(year_str)
+                month_num = int(month_str)
+                month_data['classification_summary'] = self.get_monthly_classification_summary(year, month_num)
+            except ValueError:
+                # Handle potential errors if month_key format is unexpected
+                month_data['classification_summary'] = {}
+                self.app.logger.error(f"Could not parse year/month from month_key: {month_key}")
+
         # Get code summaries
         code_totals = self.calculate_code_totals()
         
@@ -848,3 +861,69 @@ class TransactionManager:
             period_type='year',
             year=year
         )
+
+    def get_monthly_classification_summary(self, year, month):
+        """
+        Get a summary of transactions grouped by classification for a specific month.
+
+        Args:
+            year: The year (integer)
+            month: The month (integer, 1-12)
+
+        Returns:
+            A dictionary where keys are classification names and values are the
+            sum of transaction amounts for that classification in the specified month.
+            Returns an empty dictionary if no relevant transactions are found.
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        month_str = f'{month:02d}'  # Format month to two digits (e.g., 01, 12)
+        query = """
+            SELECT 
+                classification, 
+                SUM(CASE 
+                    WHEN type = 'credit' THEN amount 
+                    WHEN type = 'debit' THEN -amount 
+                    ELSE 0 
+                END) as total_amount
+            FROM transactions
+            WHERE strftime('%Y', date) = ? AND strftime('%m', date) = ? AND classification IS NOT NULL AND classification != ''
+            GROUP BY classification
+            ORDER BY total_amount DESC
+        """
+        cursor.execute(query, (str(year), month_str))
+        rows = cursor.fetchall()
+
+        summary = {row['classification']: row['total_amount'] for row in rows}
+        return summary
+
+    def get_annual_summary(self, year):
+        """
+        Get a summary of transactions for a specific year.
+
+        Args:
+            year: The year (integer)
+
+        Returns:
+            A dictionary where keys are month names and values are the
+            sum of transaction amounts for that month in the specified year.
+            Returns an empty dictionary if no relevant transactions are found.
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        query = """
+            SELECT strftime('%m', date) as month, SUM(amount) as total_amount
+            FROM transactions
+            WHERE strftime('%Y', date) = ?
+            GROUP BY month
+            ORDER BY month ASC
+        """
+        cursor.execute(query, (str(year),))
+        rows = cursor.fetchall()
+
+        summary = {}
+        for row in rows:
+            month_name = datetime.strptime(f'{year}-{row["month"]:02d}', '%Y-%m').strftime('%B')
+            summary[month_name] = row['total_amount']
+
+        return summary
