@@ -8,13 +8,24 @@ INDEX_TEMPLATE = """
 
 {% block content %}
 
+<!-- Year Filter -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <label for="yearFilterInput" class="form-label">Filter Summary by Year:</label>
+        <div class="input-group">
+            <input type="number" class="form-control" id="yearFilterInput" value="{{ current_year }}">
+            <button class="btn btn-outline-secondary" type="button" id="yearFilterButton">Go</button>
+        </div>
+    </div>
+</div>
+
 <!-- Overall Summary Cards -->
 <div class="row text-center summary-card">
     <div class="col-md-4">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Total Income</h5>
-                <p class="card-text summary-value credit">{{ '{:,.2f}'.format(overall_income) }}</p>
+                <p class="card-text summary-value credit" id="totalIncomeValue">{{ '{:,.2f}'.format(overall_income) }}</p>
             </div>
         </div>
     </div>
@@ -22,7 +33,7 @@ INDEX_TEMPLATE = """
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Total Expense</h5>
-                <p class="card-text summary-value debit">{{ '{:,.2f}'.format(overall_expense) }}</p>
+                <p class="card-text summary-value debit" id="totalExpenseValue">{{ '{:,.2f}'.format(overall_expense) }}</p>
             </div>
         </div>
     </div>
@@ -30,7 +41,7 @@ INDEX_TEMPLATE = """
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Net Income</h5>
-                <p class="card-text summary-value {% if overall_net >= 0 %}credit{% else %}debit{% endif %}">
+                <p class="card-text summary-value {% if overall_net >= 0 %}credit{% else %}debit{% endif %}" id="netIncomeValue">
                     {{ '{:,.2f}'.format(overall_net) }}
                 </p>
             </div>
@@ -278,6 +289,15 @@ INDEX_TEMPLATE = """
                                                            data-code="{{ transaction.code }}">
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-info copy-btn" data-bs-toggle="modal" data-bs-target="#addTransactionModal" 
+                                                           data-date="{{ transaction.date }}"
+                                                           data-description="{{ transaction.description }}"
+                                                           data-amount="{{ transaction.amount }}"
+                                                           data-type="{{ transaction.type }}"
+                                                           data-classification="{{ transaction.classification }}"
+                                                           data-code="{{ transaction.code }}">
+                                                            <i class="bi bi-clipboard-plus"></i>
+                                                        </button>
                                                         <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#deleteTransactionModal" 
                                                            data-transaction-id="{{ transaction.id }}"
                                                            data-description="{{ transaction.description }}">
@@ -348,6 +368,15 @@ INDEX_TEMPLATE = """
                                            data-code="{{ transaction.code }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
+                                        <button type="button" class="btn btn-sm btn-outline-info copy-btn" data-bs-toggle="modal" data-bs-target="#addTransactionModal" 
+                                           data-date="{{ transaction.date }}"
+                                           data-description="{{ transaction.description }}"
+                                           data-amount="{{ transaction.amount }}"
+                                           data-type="{{ transaction.type }}"
+                                           data-classification="{{ transaction.classification }}"
+                                           data-code="{{ transaction.code }}">
+                                            <i class="bi bi-clipboard-plus"></i>
+                                        </button>
                                         <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#deleteTransactionModal" 
                                            data-transaction-id="{{ transaction.id }}"
                                            data-description="{{ transaction.description }}">
@@ -366,6 +395,88 @@ INDEX_TEMPLATE = """
         </div>
     </div>
 </div>
+
+<!-- Year Filter JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const yearInput = document.getElementById('yearFilterInput');
+        const yearButton = document.getElementById('yearFilterButton'); // Get the button
+        const totalIncomeEl = document.getElementById('totalIncomeValue');
+        const totalExpenseEl = document.getElementById('totalExpenseValue');
+        const netIncomeEl = document.getElementById('netIncomeValue');
+
+        function formatCurrency(value) {
+            return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' }).replace('$', ''); // Keep consistent with Jinja filter
+        }
+
+        function updateOverallSummary(year) {
+            if (!year || isNaN(year)) {
+                console.error("Invalid year provided:", year);
+                // Optionally reset fields or show an error message
+                totalIncomeEl.textContent = 'N/A';
+                totalExpenseEl.textContent = 'N/A';
+                netIncomeEl.textContent = 'N/A';
+                netIncomeEl.className = 'card-text summary-value'; // Reset class
+                return;
+            }
+            console.log(`Fetching summary for year: ${year}`); // Debug log
+            fetch(`/get_summary/${year}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Received summary data:", data); // Debug log
+                    if (data.error) {
+                         console.error("Error fetching summary:", data.error);
+                         totalIncomeEl.textContent = 'Error';
+                         totalExpenseEl.textContent = 'Error';
+                         netIncomeEl.textContent = 'Error';
+                         netIncomeEl.className = 'card-text summary-value'; // Reset class
+                         return;
+                    }
+                    totalIncomeEl.textContent = formatCurrency(data.overall_income || 0);
+                    totalExpenseEl.textContent = formatCurrency(data.overall_expense || 0);
+                    netIncomeEl.textContent = formatCurrency(data.overall_net || 0);
+
+                    // Update net income color
+                    netIncomeEl.classList.remove('credit', 'debit');
+                    if ((data.overall_net || 0) >= 0) {
+                        netIncomeEl.classList.add('credit');
+                    } else {
+                        netIncomeEl.classList.add('debit');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching or processing overall summary:', error);
+                    totalIncomeEl.textContent = 'Error';
+                    totalExpenseEl.textContent = 'Error';
+                    netIncomeEl.textContent = 'Error';
+                    netIncomeEl.className = 'card-text summary-value'; // Reset class
+                });
+        }
+
+        // Add event listener to the button
+        yearButton.addEventListener('click', function() {
+            const selectedYear = parseInt(yearInput.value, 10);
+            updateOverallSummary(selectedYear);
+        });
+
+        // Add event listener for Enter key on the input field
+        yearInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent potential form submission if inside a form
+                const selectedYear = parseInt(this.value, 10);
+                updateOverallSummary(selectedYear);
+            }
+        });
+
+        // Initial load - The initial values are now correctly rendered by Jinja
+        // for the default year (2025), so no initial JS fetch is needed.
+    });
+</script>
 
 <!-- Year Filter JavaScript -->
 <script>
@@ -484,6 +595,80 @@ INDEX_TEMPLATE = """
                 }
             });
         }
+    });
+</script>
+
+<!-- Specific script for index page -->
+
+<!-- Script for Edit Transaction Modal -->
+<script>
+    const addTransactionModal = document.getElementById('addTransactionModal');
+    const addTransactionForm = document.getElementById('addTransactionForm');
+    const modalTitle = addTransactionModal.querySelector('.modal-title');
+    const submitButton = addTransactionModal.querySelector('button[type="submit"]');
+    const transactionIdInput = document.getElementById('transaction_id');
+    const dateInput = document.getElementById('date');
+    const descriptionInput = document.getElementById('description');
+    const amountInput = document.getElementById('amount');
+    const typeInput = document.getElementById('type');
+    const codeInput = document.getElementById('code');
+    const classificationInput = document.getElementById('classification');
+
+    addTransactionModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; // Button that triggered the modal
+        const isEdit = button && button.classList.contains('edit-transaction-btn');
+        const isCopy = button && button.classList.contains('copy-transaction-btn');
+
+        if (isEdit) {
+            modalTitle.textContent = 'Edit Transaction';
+            submitButton.textContent = 'Save Changes';
+            const transactionId = button.getAttribute('data-id');
+            // Dynamically set action URL for editing
+            addTransactionForm.action = `/edit_transaction/${transactionId}`;
+
+            transactionIdInput.value = transactionId;
+            dateInput.value = button.getAttribute('data-date');
+            descriptionInput.value = button.getAttribute('data-description');
+            amountInput.value = button.getAttribute('data-amount');
+            typeInput.value = button.getAttribute('data-type');
+            codeInput.value = button.getAttribute('data-code');
+            classificationInput.value = button.getAttribute('data-classification');
+
+        } else if (isCopy) {
+            modalTitle.textContent = 'Copy Transaction';
+            submitButton.textContent = 'Add Transaction';
+            // Set action URL for adding (since copy results in a new transaction)
+            addTransactionForm.action = '/add_transaction';
+
+            // Populate fields from data attributes
+            dateInput.value = button.getAttribute('data-date');
+            descriptionInput.value = button.getAttribute('data-description');
+            amountInput.value = button.getAttribute('data-amount');
+            typeInput.value = button.getAttribute('data-type');
+            codeInput.value = button.getAttribute('data-code');
+            classificationInput.value = button.getAttribute('data-classification');
+
+            // IMPORTANT: Clear the transaction ID for a copy
+            transactionIdInput.value = '';
+
+        } else { // It's an Add operation (modal opened by Add Transaction button)
+            modalTitle.textContent = 'Add New Transaction';
+            submitButton.textContent = 'Add Transaction';
+            // Set action URL for adding
+            addTransactionForm.action = '/add_transaction';
+            addTransactionForm.reset(); // Clear the form
+            transactionIdInput.value = ''; // Ensure ID is clear
+        }
+    });
+
+    // Optional: Reset modal title and button text when modal is hidden
+    addTransactionModal.addEventListener('hidden.bs.modal', function () {
+        modalTitle.textContent = 'Add New Transaction'; // Reset to default
+        submitButton.textContent = 'Add Transaction';
+        // Reset action to the default add action
+        addTransactionForm.action = '/add_transaction';
+        addTransactionForm.reset();
+        transactionIdInput.value = '';
     });
 </script>
 
@@ -642,7 +827,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-
 {% if selected_month %}
 <div class="monthly-transactions mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -689,6 +873,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                data-classification="{{ transaction.classification }}"
                                data-code="{{ transaction.code }}">
                                 <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-info copy-btn" data-bs-toggle="modal" data-bs-target="#addTransactionModal" 
+                               data-date="{{ transaction.date }}"
+                               data-description="{{ transaction.description }}"
+                               data-amount="{{ transaction.amount }}"
+                               data-type="{{ transaction.type }}"
+                               data-classification="{{ transaction.classification }}"
+                               data-code="{{ transaction.code }}">
+                                <i class="bi bi-clipboard-plus"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#deleteTransactionModal" 
                                data-transaction-id="{{ transaction.id }}"

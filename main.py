@@ -5,11 +5,23 @@ Features: Homepage listing transactions, modal for adding transactions,
           monthly and overall financial summaries.
 """
 import os
-import os # <-- Add this import
+import sys
 from flask import Flask, request, redirect, url_for, g, flash, jsonify, session
 from datetime import datetime
 import webbrowser
 import threading
+import logging
+
+# Helper function to find resources (needed for PyInstaller)
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 # Import modules
 from database import DatabaseManager
@@ -20,9 +32,27 @@ from templates.modals_template import StringTemplateLoader
 from config import DATABASE
 
 # --- Flask App Setup ---
-app = Flask(__name__, static_folder='static')
+# Use resource_path to set template and static folders correctly for PyInstaller
+template_folder = resource_path('templates')
+static_folder = resource_path('static')
+app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 app.secret_key = os.urandom(24)  # Needed for flashing messages
-app.config.from_pyfile('config.py') # Load config directly from config.py file
+
+# Set logging level to DEBUG
+logging.basicConfig(level=logging.DEBUG)
+app.logger.setLevel(logging.DEBUG)
+
+# Load config: Need to handle path for PyInstaller too
+config_path = resource_path('config.py')
+try:
+    app.config.from_pyfile(config_path)
+except FileNotFoundError:
+    # Fallback or error handling if config.py isn't found even with resource_path
+    # This might indicate an issue with --add-data in PyInstaller
+    print(f"ERROR: Configuration file not found at {config_path}")
+    # Depending on criticality, you might exit or use default settings
+    # For now, we'll proceed, but Flask might complain if config is essential
+    pass 
 
 # Initialize managers
 db_manager = DatabaseManager(app, DATABASE)
@@ -122,6 +152,17 @@ def index(month=None):
         session['ui_state'] = {}
     
     return transaction_manager.index_view(month, ui_state=session.get('ui_state', {}))
+
+@app.route('/get_summary/<int:year>')
+def get_summary(year):
+    """API endpoint to get overall summary totals for a specific year."""
+    summary_data = transaction_manager.get_overall_totals_by_year(year)
+    app.logger.debug(f"Summary data for year {year} before jsonify: {summary_data}")
+    if 'error' in summary_data:
+        # Return a JSON error response with an appropriate status code
+        app.logger.error(f"Error returned for year {year}: {summary_data['error']}")
+        return jsonify(summary_data), 400 # Or 500 depending on error type
+    return jsonify(summary_data)
 
 @app.route('/print/month/<month>')
 def print_transactions(month):

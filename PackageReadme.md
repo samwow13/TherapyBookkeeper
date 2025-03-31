@@ -1,49 +1,43 @@
 # Packaging the Therapy Bookkeeper Application
 
-This document outlines the steps to package the Therapy Bookkeeper Flask application into a single executable file using PyInstaller.
+This application is packaged into a single executable file using PyInstaller.
 
 ## Prerequisites
 
-1.  **Python:** Ensure you have Python installed on your system.
-2.  **Pip:** Python's package installer, usually included with Python.
-3.  **Project Dependencies:** Make sure all required Python packages are installed. You can usually install them using the `requirements.txt` file:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  **PyInstaller:** Install PyInstaller if you haven't already:
+-   Python installed
+-   Pip installed
+
+## Installation Steps
+
+1.  **Install PyInstaller:**
     ```bash
     pip install pyinstaller
     ```
 
-## Packaging Command
+2.  **Navigate to Project Directory:**
+    Open your terminal or command prompt and navigate to the root directory of the Therapy Bookkeeper project (the one containing `main.py`).
 
-Navigate to the root directory of the project (the one containing `main.py`) in your terminal or command prompt. Then, run the following command:
+3.  **Run PyInstaller:**
+    Execute the following command:
 
-```bash
-python -m PyInstaller --onefile --windowed --name TherapyBookkeeper --add-data "templates:templates" --add-data "static:static" --add-data "therapist_bookkeeping.db:." --add-data "config.py:." main.py
-```
+    ```bash
+    python -m PyInstaller --onefile --windowed --name TherapyBookkeeper --add-data "therapist_bookkeeping.db:." --add-data "templates:templates" --add-data "config.py:." --add-data "static:static" main.py
+    ```
 
-### Command Breakdown:
+    **Explanation of Flags:**
+    *   `--onefile`: Creates a single executable file.
+    *   `--windowed`: Prevents a console window from appearing when the application runs.
+    *   `--name TherapyBookkeeper`: Sets the name of the output executable.
+    *   `--add-data "therapist_bookkeeping.db:."`: Includes the database file *within* the executable.
+    *   `--add-data "templates:templates"`: Includes the templates directory *within* the executable.
+    *   `--add-data "config.py:."`: Includes the configuration file *within* the executable.
+    *   `--add-data "static:static"`: Includes the static assets directory (CSS, JS, images) *within* the executable.
+    *   `main.py`: Your main application script.
 
-*   `python -m PyInstaller`: Runs PyInstaller as a module.
-*   `--onefile`: Creates a single executable file instead of a folder containing multiple files.
-*   `--windowed` (or `--noconsole`): Prevents the console window from appearing when the application runs. Use this for GUI applications.
-*   `--name TherapyBookkeeper`: Sets the name of the output executable (e.g., `TherapyBookkeeper.exe` on Windows).
-*   `--add-data "<source>:<destination>"`: Tells PyInstaller to bundle additional data files or folders. This is crucial for including templates, static assets (CSS, JS, images), the database file, and configuration files.
-    *   `templates:templates`: Bundles the `templates` folder into the executable, making it available at the path `templates` within the packaged app.
-    *   `static:static`: Bundles the `static` folder.
-    *   `therapist_bookkeeping.db:.`: Bundles the database file into the root directory (`.`) within the packaged app.
-    *   `config.py:.`: Bundles the configuration file into the root directory (`.`) within the packaged app.
-*   `main.py`: Specifies the main entry point script for your application.
+4.  **Find the Executable:**
+    PyInstaller will create a `dist` folder. Inside `dist`, you will find `TherapyBookkeeper.exe`. Data files like the database, templates, and config are bundled *inside* the `.exe` itself and extracted to a temporary location when the app runs.
 
-## Output
-
-After the command finishes successfully, PyInstaller will create a few folders:
-
-*   `build`: Contains intermediate build files. You can usually delete this after a successful build.
-*   `dist`: Contains the final packaged application. Your executable (`TherapyBookkeeper.exe` or similar) will be inside this folder.
-*   A `.spec` file (`TherapyBookkeeper.spec`): This file stores the configuration used by PyInstaller. You can modify this file for more advanced packaging options and rerun PyInstaller using `pyinstaller TherapyBookkeeper.spec`.
-
-## Running the Packaged Application
-
-Navigate to the `dist` folder and simply double-click the `TherapyBookkeeper` executable to run the application. It should start the server and open the application in your default web browser. Use the "Shutdown Application" button within the app to close it properly.
+5.  **Prepare for Distribution:**
+    *   Copy the generated `TherapyBookkeeper.exe` from the `dist` folder to your desired distribution location.
+    *   **Manually copy** the `BackupInstructions.md` file from your project directory and place it in the **same folder** as the `TherapyBookkeeper.exe`.
+    *   You can now distribute this folder containing the `.exe` and the `.md` file to the user.

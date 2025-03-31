@@ -289,6 +289,81 @@ class TransactionManager:
         
         return transactions, pagination
     
+    def get_overall_totals(self):
+        """
+        Calculate the overall total income, expense, and net income from all transactions.
+
+        Returns:
+            A dictionary containing 'overall_income', 'overall_expense', and 'overall_net'.
+        """
+        db = self.get_db()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT
+                COALESCE(SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END), 0) as total_income,
+                COALESCE(SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END), 0) as total_expense
+            FROM transactions
+        """)
+        totals = cursor.fetchone()
+
+        if totals:
+            overall_income = totals[0]
+            overall_expense = totals[1]
+            overall_net = overall_income - overall_expense
+            return {
+                'overall_income': overall_income,
+                'overall_expense': overall_expense,
+                'overall_net': overall_net
+            }
+        else:
+            return {'overall_income': 0, 'overall_expense': 0, 'overall_net': 0}
+
+    def get_overall_totals_by_year(self, year):
+        """
+        Calculate the overall total income, expense, and net income for a specific year.
+
+        Args:
+            year: The integer year to filter transactions by.
+
+        Returns:
+            A dictionary containing 'overall_income', 'overall_expense', 'overall_net',
+            or {'error': 'message'} if an error occurs.
+        """
+        if not isinstance(year, int):
+            return {'error': 'Invalid year format.'}
+
+        try:
+            db = self.get_db()
+            cursor = db.cursor()
+            cursor.execute("""
+                SELECT
+                    COALESCE(SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END), 0) as total_income,
+                    COALESCE(SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END), 0) as total_expense
+                FROM transactions
+                WHERE CAST(strftime('%Y', date) AS INTEGER) = ?
+            """, (year,))
+            totals = cursor.fetchone()
+            self.app.logger.debug(f"Raw DB totals for year {year}: {totals}")
+
+            if totals:
+                overall_income = totals['total_income']
+                overall_expense = totals['total_expense']
+                overall_net = overall_income - overall_expense
+                return {
+                    'overall_income': overall_income,
+                    'overall_expense': overall_expense,
+                    'overall_net': overall_net
+                }
+            else:
+                # Should technically return 0s if no transactions match the year
+                return {'overall_income': 0, 'overall_expense': 0, 'overall_net': 0}
+        except sqlite3.Error as e:
+            self.app.logger.error(f"Database error calculating totals for year {year}: {e}")
+            return {'error': f'Database error: {e}'}
+        except Exception as e:
+            self.app.logger.error(f"Unexpected error calculating totals for year {year}: {e}")
+            return {'error': f'An unexpected error occurred: {e}'}
+
     def calculate_overall_totals(self):
         """
         Calculate overall financial totals.
@@ -620,10 +695,14 @@ class TransactionManager:
         
         # Get all transactions for fallback if needed
         all_transactions = self.get_all_transactions()
-        
-        # Calculate overall totals for summary cards
-        overall_income, overall_expense, overall_net = self.calculate_overall_totals()
-        
+
+        # Calculate overall totals for summary cards for the current year
+        current_year = datetime.now().year
+        initial_summary_data = self.get_overall_totals_by_year(current_year)
+        overall_income = initial_summary_data.get('overall_income', 0)
+        overall_expense = initial_summary_data.get('overall_expense', 0)
+        overall_net = initial_summary_data.get('overall_net', 0)
+
         # Render the template
         return render_template_string(
             INDEX_TEMPLATE,
@@ -644,7 +723,8 @@ class TransactionManager:
             transactions_by_month=transactions_by_month,
             all_transactions=all_transactions,
             monthly_transactions=transactions if month else None,
-            ui_state=ui_state or {}
+            ui_state=ui_state or {},
+            current_year=current_year
         )
         
     def print_month_view(self, month):
