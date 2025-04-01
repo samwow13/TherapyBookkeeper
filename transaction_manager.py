@@ -86,22 +86,8 @@ class TransactionManager:
             except sqlite3.Error as e:
                 flash(f'Database error: {e}', 'danger')
                 
-        # Calculate which month the transaction belongs to (for potential redirect)
-        transaction_month = None
-        if date:
-            try:
-                # Extract year and month from the date (format: YYYY-MM-DD)
-                transaction_month = date[:7]  # Gets YYYY-MM portion
-                
-                # If this is a new month's transaction, update selected_month in UI state
-                if 'ui_state' in session and transaction_month:
-                    session['ui_state']['selected_month'] = transaction_month
-                    # Also ensure monthly summary is open to show the new transaction
-                    session['ui_state']['monthlySummaryCollapse'] = 'show'
-                    session.modified = True
-                    self.app.logger.debug(f"Updated UI state for new transaction: {session['ui_state']}")
-            except Exception as e:
-                self.app.logger.error(f"Error setting selected month: {e}")
+        # Removed UI state tracking for Monthly Summary dropdown
+        # No longer automatically opening Monthly Summary after adding transaction
                 
         return redirect(url_for('index'))
     

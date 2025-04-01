@@ -25,7 +25,7 @@ EDIT_TRANSACTION_MODAL = """<!-- Edit Transaction Modal -->
                     </div>
                     <div class="mb-3">
                         <label for="edit_code" class="form-label">Code</label>
-                        <select class="form-select" id="edit_code" name="code" required>
+                        <select class="form-select" id="edit_code" name="code">
                             {{ code_options|safe }}
                         </select>
                     </div>

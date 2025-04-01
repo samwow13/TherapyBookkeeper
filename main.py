@@ -125,7 +125,7 @@ def inject_modal_data():
             # Get codes for dropdown
             cursor.execute("SELECT code FROM codes ORDER BY code")
             codes = [row['code'] for row in cursor.fetchall()]
-            code_options = "".join([f'<option value="{c}">{c}</option>' for c in codes])
+            code_options = "<option value=\"\">No Code</option>" + "".join([f'<option value="{c}">{c}</option>' for c in codes])
         except Exception as e:
             # Log the error but don't crash
             print(f"Error fetching dropdown data: {e}")

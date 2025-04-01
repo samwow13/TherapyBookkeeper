@@ -25,7 +25,7 @@ ADD_TRANSACTION_MODAL = """
                     </div>
                     <div class="mb-3">
                         <label for="code" class="form-label">Code</label>
-                        <select class="form-select" id="code" name="code" required>
+                        <select class="form-select" id="code" name="code">
                             {{ code_options|safe }}
                         </select>
                     </div>

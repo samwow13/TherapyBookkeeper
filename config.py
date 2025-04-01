@@ -14,5 +14,6 @@ CLASSIFICATIONS = [
 
 # Define transaction codes
 CODES = [
+    "No Code",
     '125'
 ]
