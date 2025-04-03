@@ -26,7 +26,7 @@ BASE_TEMPLATE = """
             top: 50%;
             transform: translateY(-50%);
             width: 300px;
-            height: 200px;
+            height: 270px; /* Increased height to accommodate checkbox */
             z-index: 1000;
             pointer-events: none; /* Allow interaction with elements behind clippy */
         }
@@ -49,6 +49,39 @@ BASE_TEMPLATE = """
         }
         .clippy-visible {
             opacity: 1;
+        }
+        
+        /* Joke Disable Clippy Checkbox */
+        .clippy-checkbox-container {
+            position: absolute;
+            top: 120px; /* Position further below Clippy */
+            right: 0;
+            width: 150px; /* Fixed width */
+            opacity: 0; 
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+            z-index: 1001; /* Higher than Clippy */
+            pointer-events: auto; /* Allow interaction with this element */
+            background-color: white; /* Solid background */
+            padding: 5px;
+            border: 2px solid red; /* Very visible border for debugging */
+            border-radius: 4px;
+        }
+        .clippy-checkbox-label {
+            display: flex;
+            align-items: center;
+            color: #000;
+            background-color: #fff;
+            padding: 6px 10px;
+            border: 2px solid #0078d7; /* Clippy blue color */
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+        .clippy-checkbox {
+            margin-right: 6px;
         }
     </style>
 </head>
@@ -74,6 +107,13 @@ BASE_TEMPLATE = """
         <img id="clippy-2" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_2.png') }}" alt="Clippy">
         <img id="clippy-3" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_3.png') }}" alt="Clippy">
         <img id="clippy-textbox" class="clippy-textbox" src="{{ url_for('static', filename='images/ClippyImages/clippy_textbox.png') }}" alt="Clippy Textbox">
+    </div>
+    
+    <!-- Separate container for the joke checkbox that appears with Clippy -->
+    <div id="clippy-checkbox-container" style="position: fixed; right: 200px; top: calc(50% + 20px); z-index: 1001; background-color: white; border: 2px solid #0078d7; padding: 5px; border-radius: 4px; display: none; cursor: pointer;">
+        <label style="display: flex; align-items: center; user-select: none; margin: 0; font-weight: bold;">
+            <input type="checkbox" style="margin-right: 6px;">Disable Clippy
+        </label>
     </div>
     {% endif %}
 
@@ -128,8 +168,9 @@ BASE_TEMPLATE = """
             const clippy2 = document.getElementById('clippy-2');
             const clippy3 = document.getElementById('clippy-3');
             const clippyTextbox = document.getElementById('clippy-textbox');
+            const clippyCheckbox = document.getElementById('clippy-checkbox-container');
             
-            if (clippy1 && clippy2 && clippy3 && clippyTextbox) {
+            if (clippy1 && clippy2 && clippy3 && clippyTextbox && clippyCheckbox) {
                 console.log('Clippy elements found, animation will start.');
             
             // Function to run the complete animation sequence
@@ -139,6 +180,10 @@ BASE_TEMPLATE = """
                 clippy2.classList.remove('clippy-visible');
                 clippy3.classList.remove('clippy-visible');
                 clippyTextbox.classList.remove('clippy-visible');
+                clippyCheckbox.classList.remove('clippy-visible');
+                
+                // Reset the checkbox position
+                clippyCheckbox.style.transform = 'translate(0, 0)';
                 
                 // Start animation
                 setTimeout(function() {
@@ -155,11 +200,19 @@ BASE_TEMPLATE = """
                             clippy2.classList.remove('clippy-visible');
                             clippy3.classList.add('clippy-visible');
                             clippyTextbox.classList.add('clippy-visible');
+                            // Make the checkbox visible with direct style changes
+                            clippyCheckbox.style.display = 'block';
+                            console.log('Checkbox should be visible now');
                             
                             // After 5 seconds, hide all Clippy elements
                             setTimeout(function() {
                                 clippy3.classList.remove('clippy-visible');
                                 clippyTextbox.classList.remove('clippy-visible');
+                                
+                                // Hide the checkbox
+                                clippyCheckbox.style.display = 'none';
+                                // Reset the checkbox position
+                                clippyCheckbox.style.transform = 'translate(0, 0)';
                             }, 5000);
                         }, 1000);
                     }, 1000);
@@ -171,6 +224,44 @@ BASE_TEMPLATE = """
             
                 // Then run it every 12 seconds (5s display + 7s pause)
                 setInterval(runClippyAnimation, 12000);
+                
+                // Add mouse movement handler for the joke checkbox that runs away
+                document.addEventListener('mousemove', function(e) {
+                    // Only run when checkbox is visible
+                    if (clippyCheckbox.style.display !== 'block') return;
+                    
+                    const checkboxRect = clippyCheckbox.getBoundingClientRect();
+                    const checkboxCenterX = checkboxRect.left + checkboxRect.width / 2;
+                    const checkboxCenterY = checkboxRect.top + checkboxRect.height / 2;
+                    
+                    // Calculate distance between mouse and checkbox center
+                    const distX = e.clientX - checkboxCenterX;
+                    const distY = e.clientY - checkboxCenterY;
+                    const distance = Math.sqrt(distX * distX + distY * distY);
+                    
+                    // Only run away if mouse is close (within 100px)
+                    if (distance < 100) {
+                        // Direction to move away (opposite of mouse)
+                        const moveX = -distX / distance * 30; // Faster movement
+                        const moveY = -distY / distance * 30; // Faster movement
+                        
+                        // Get current transform if any
+                        const currentTransform = window.getComputedStyle(clippyCheckbox).getPropertyValue('transform');
+                        let currentX = 0;
+                        let currentY = 0;
+                        
+                        // Handle the case when no transform exists yet
+                        if (currentTransform && currentTransform !== 'none') {
+                            const matrix = new DOMMatrix(currentTransform);
+                            currentX = matrix.m41 || 0;
+                            currentY = matrix.m42 || 0;
+                        }
+                        
+                        // Apply new transform (with current offset + new movement)
+                        clippyCheckbox.style.transform = `translate(${currentX + moveX}px, ${currentY + moveY}px)`;
+                        console.log('Moving checkbox away from mouse!');
+                    }
+                });
             } else {
                 console.log('Clippy is disabled or elements not found.');
             }
