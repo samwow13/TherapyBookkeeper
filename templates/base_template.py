@@ -64,8 +64,6 @@ BASE_TEMPLATE = """
             pointer-events: auto; /* Allow interaction with this element */
             background-color: white; /* Solid background */
             padding: 5px;
-            border: 2px solid red; /* Very visible border for debugging */
-            border-radius: 4px;
         }
         .clippy-checkbox-label {
             display: flex;
@@ -73,11 +71,8 @@ BASE_TEMPLATE = """
             color: #000;
             background-color: #fff;
             padding: 6px 10px;
-            border: 2px solid #0078d7; /* Clippy blue color */
-            border-radius: 4px;
             font-size: 14px;
             font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             user-select: none;
         }
         .clippy-checkbox {
@@ -112,7 +107,7 @@ BASE_TEMPLATE = """
     </div>
     
     <!-- Separate container for the joke checkbox that appears with Clippy -->
-    <div id="clippy-checkbox-container" style="position: fixed; right: 200px; top: calc(50% + 20px); z-index: 1001; background-color: white; border: 2px solid #0078d7; padding: 5px; border-radius: 4px; display: none; cursor: pointer;">
+    <div id="clippy-checkbox-container" style="position: fixed; right: 200px; top: calc(50% + 20px); z-index: 1001; background-color: white; padding: 5px; display: none; cursor: pointer;">
         <label style="display: flex; align-items: center; user-select: none; margin: 0; font-weight: bold;">
             <input type="checkbox" style="margin-right: 6px;">Disable Clippy
         </label>
