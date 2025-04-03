@@ -106,7 +106,9 @@ BASE_TEMPLATE = """
         <img id="clippy-1" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_1.png') }}" alt="Clippy">
         <img id="clippy-2" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_2.png') }}" alt="Clippy">
         <img id="clippy-3" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_3.png') }}" alt="Clippy">
+        <img id="clippy-angry" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_angry.png') }}" alt="Angry Clippy">
         <img id="clippy-textbox" class="clippy-textbox" src="{{ url_for('static', filename='images/ClippyImages/clippy_textbox.png') }}" alt="Clippy Textbox">
+        <img id="clippy-textbox-angry" class="clippy-textbox" src="{{ url_for('static', filename='images/ClippyImages/clippy_textbox_angry.png') }}" alt="Angry Clippy Textbox">
     </div>
     
     <!-- Separate container for the joke checkbox that appears with Clippy -->
@@ -170,7 +172,10 @@ BASE_TEMPLATE = """
             const clippyTextbox = document.getElementById('clippy-textbox');
             const clippyCheckbox = document.getElementById('clippy-checkbox-container');
             
-            if (clippy1 && clippy2 && clippy3 && clippyTextbox && clippyCheckbox) {
+            const clippyAngry = document.getElementById('clippy-angry');
+            const clippyTextboxAngry = document.getElementById('clippy-textbox-angry');
+            
+            if (clippy1 && clippy2 && clippy3 && clippyAngry && clippyTextbox && clippyTextboxAngry && clippyCheckbox) {
                 console.log('Clippy elements found, animation will start.');
             
             // Function to run the complete animation sequence
@@ -179,7 +184,9 @@ BASE_TEMPLATE = """
                 clippy1.classList.remove('clippy-visible');
                 clippy2.classList.remove('clippy-visible');
                 clippy3.classList.remove('clippy-visible');
+                clippyAngry.classList.remove('clippy-visible');
                 clippyTextbox.classList.remove('clippy-visible');
+                clippyTextboxAngry.classList.remove('clippy-visible');
                 clippyCheckbox.classList.remove('clippy-visible');
                 
                 // Reset the checkbox position
@@ -241,6 +248,12 @@ BASE_TEMPLATE = """
                     
                     // Only run away if mouse is close (within 100px)
                     if (distance < 100) {
+                        // Show angry Clippy when user tries to interact with checkbox
+                        clippy3.classList.remove('clippy-visible');
+                        clippyTextbox.classList.remove('clippy-visible');
+                        clippyAngry.classList.add('clippy-visible');
+                        clippyTextboxAngry.classList.add('clippy-visible');
+                        
                         // Direction to move away (opposite of mouse)
                         const moveX = -distX / distance * 30; // Faster movement
                         const moveY = -distY / distance * 30; // Faster movement
@@ -259,7 +272,7 @@ BASE_TEMPLATE = """
                         
                         // Apply new transform (with current offset + new movement)
                         clippyCheckbox.style.transform = `translate(${currentX + moveX}px, ${currentY + moveY}px)`;
-                        console.log('Moving checkbox away from mouse!');
+                        console.log('Clippy is angry! Moving checkbox away from mouse!');
                     }
                 });
             } else {
