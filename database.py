@@ -161,6 +161,21 @@ class DatabaseManager:
                     cursor.execute("INSERT OR IGNORE INTO classifications (classification) VALUES (?)", (classification,))
                 except sqlite3.IntegrityError:
                     pass
+                    
+            # Check if settings table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='settings'")
+            if not cursor.fetchone():
+                cursor.execute('''
+                    CREATE TABLE settings (
+                        key TEXT PRIMARY KEY,
+                        value TEXT NOT NULL
+                    )
+                ''')
+                print("Created 'settings' table.")
+                
+                # Initialize default settings
+                cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", 
+                               ("clippy_enabled", "true"))
 
             db.commit()
             print("Database schema checked/updated.")
@@ -194,3 +209,93 @@ class DatabaseManager:
         else:
             flash('Error updating database schema. Check server logs.', 'danger')
         return redirect(url_for('index'))
+    
+    def get_setting(self, key, default=None):
+        """
+        Get a setting value from the database.
+        
+        Args:
+            key: The setting key
+            default: Default value if setting doesn't exist
+            
+        Returns:
+            The setting value, or default if not found
+        """
+        try:
+            db = self.get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+            result = cursor.fetchone()
+            if result:
+                return result[0]
+            return default
+        except Exception as e:
+            print(f"Error getting setting {key}: {e}")
+            return default
+        
+    def get_all_settings(self):
+        """
+        Get all settings from the database.
+        
+        Returns:
+            Dictionary of all settings
+        """
+        try:
+            db = self.get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT key, value FROM settings")
+            settings = {}
+            rows = cursor.fetchall()
+            print(f"DEBUG - get_all_settings: found {len(rows)} settings")
+            for row in rows:
+                key, value = row
+                print(f"DEBUG - get_all_settings: raw setting {key}={value}")
+                # Convert string representations to proper types
+                if value.lower() == 'true':
+                    settings[key] = True
+                elif value.lower() == 'false':
+                    settings[key] = False
+                elif value.isdigit():
+                    settings[key] = int(value)
+                else:
+                    settings[key] = value
+                print(f"DEBUG - get_all_settings: converted setting {key}={settings[key]}")
+            print(f"DEBUG - get_all_settings: final settings = {settings}")
+            return settings
+        except Exception as e:
+            print(f"Error getting all settings: {e}")
+            return {}
+    
+    def save_setting(self, key, value):
+        """
+        Save a setting to the database.
+        
+        Args:
+            key: The setting key
+            value: The setting value
+            
+        Returns:
+            Bool: True if successful, False otherwise
+        """
+        try:
+            # Convert value to string representation for storage
+            if isinstance(value, bool):
+                value = 'true' if value else 'false'
+            elif value is None:
+                value = ''
+            else:
+                value = str(value)
+                
+            db = self.get_db()
+            cursor = db.cursor()
+            cursor.execute(
+                "INSERT INTO settings (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = ?",
+                (key, value, value)
+            )
+            db.commit()
+            print(f"DEBUG - save_setting: Successfully saved {key}={value} to database")
+            return True
+        except Exception as e:
+            print(f"Error saving setting {key}: {e}")
+            return False

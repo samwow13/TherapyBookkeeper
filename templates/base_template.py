@@ -68,12 +68,14 @@ BASE_TEMPLATE = """
     </div>
     
     <!-- Clippy Animation Container - Now positioned on the right side of the page -->
+    {% if settings.get('clippy_enabled', True) %}
     <div class="clippy-container">
         <img id="clippy-1" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_1.png') }}" alt="Clippy">
         <img id="clippy-2" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_2.png') }}" alt="Clippy">
         <img id="clippy-3" class="clippy-image" src="{{ url_for('static', filename='images/ClippyImages/clippy_3.png') }}" alt="Clippy">
         <img id="clippy-textbox" class="clippy-textbox" src="{{ url_for('static', filename='images/ClippyImages/clippy_textbox.png') }}" alt="Clippy Textbox">
     </div>
+    {% endif %}
 
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
@@ -121,11 +123,14 @@ BASE_TEMPLATE = """
     <!-- Clippy Animation Script - Now in a loop every 5 seconds -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Get all Clippy elements
+            // Check if Clippy is enabled by seeing if the elements exist
             const clippy1 = document.getElementById('clippy-1');
             const clippy2 = document.getElementById('clippy-2');
             const clippy3 = document.getElementById('clippy-3');
             const clippyTextbox = document.getElementById('clippy-textbox');
+            
+            if (clippy1 && clippy2 && clippy3 && clippyTextbox) {
+                console.log('Clippy elements found, animation will start.');
             
             // Function to run the complete animation sequence
             function runClippyAnimation() {
@@ -164,8 +169,11 @@ BASE_TEMPLATE = """
             // Run the animation immediately once
             runClippyAnimation();
             
-            // Then run it every 12 seconds (5s display + 7s pause)
-            setInterval(runClippyAnimation, 12000);
+                // Then run it every 12 seconds (5s display + 7s pause)
+                setInterval(runClippyAnimation, 12000);
+            } else {
+                console.log('Clippy is disabled or elements not found.');
+            }
         });
     </script>
     
@@ -187,6 +195,9 @@ BASE_TEMPLATE = """
     </script>
     <script>
         {{ shutdown_script_template|safe }}
+    </script>
+    <script>
+        {{ site_settings_script|safe }}
     </script>
 
     <!-- Minimal Modal Cleanup Script -->

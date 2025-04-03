@@ -103,10 +103,17 @@ def inject_modal_data():
         EDIT_CODES_SCRIPT_TEMPLATE,
         SHUTDOWN_SCRIPT_TEMPLATE
     )
+    from templates.site_settings_modal import (
+        SITE_SETTINGS_MODAL,
+        SITE_SETTINGS_SCRIPT
+    )
     
     # Default empty options
     classification_options = ""
     code_options = ""
+    
+    # Get site settings
+    settings = db_manager.get_all_settings()
     
     # Only try to fetch data if database connection is available
     if hasattr(g, 'db'):
@@ -138,8 +145,11 @@ def inject_modal_data():
         'print_modals_script': PRINT_MODALS_SCRIPT_TEMPLATE,
         'edit_codes_script': EDIT_CODES_SCRIPT_TEMPLATE,
         'shutdown_script_template': SHUTDOWN_SCRIPT_TEMPLATE,
+        'site_settings_modal': SITE_SETTINGS_MODAL,
+        'site_settings_script': SITE_SETTINGS_SCRIPT,
         'classification_options': classification_options,
         'code_options': code_options,
+        'settings': settings
     }
 
 # --- Routes ---
@@ -416,6 +426,38 @@ def init_db_route():
 def update_db_route():
     """Route to update the database schema manually via browser."""
     return db_manager.update_db_route()
+
+@app.route('/save-settings', methods=['POST'])
+def save_settings():
+    """Save site settings."""
+    try:
+        # Get clippy_enabled setting and print debug info
+        clippy_enabled = request.form.get('clippy_enabled') == 'on'
+        print(f"DEBUG - save_settings: form data keys = {list(request.form.keys())}")
+        print(f"DEBUG - save_settings: form data values = {list(request.form.values())}")
+        print(f"DEBUG - save_settings: clippy_enabled = {clippy_enabled}")
+        
+        # Make sure the settings table exists
+        with app.app_context():
+            db_manager.update_db_schema()
+        
+        # Save settings
+        success = db_manager.save_setting('clippy_enabled', clippy_enabled)
+        print(f"DEBUG - save_settings: db save result = {success}")
+        
+        # Get current settings to verify the update
+        current_settings = db_manager.get_all_settings()
+        print(f"DEBUG - save_settings: current settings after save = {current_settings}")
+        
+        # Force refresh setting in the current context
+        app.logger.info(f"Settings saved: clippy_enabled = {clippy_enabled}")
+        return jsonify({'success': True, 'message': 'Settings saved successfully'})
+    except Exception as e:
+        app.logger.error(f"Error saving settings: {e}")
+        print(f"Exception in save_settings: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f"Error saving settings: {str(e)}"}), 500
 
 # --- Main Execution ---
 if __name__ == '__main__':
